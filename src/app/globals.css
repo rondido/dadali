@@ -1,0 +1,42 @@
+@import "tailwindcss";
+
+/* 다달이 디자인 토큰 (화면 시안 기준) */
+:root {
+  --ground: #f6f7f9;
+  --surface: #ffffff;
+  --ink: #16181d;
+  --ink-2: #3d434e;
+  --muted: #5b616e;
+  --line: #e3e6eb;
+  --line-strong: #c9ced6;
+  --danger: #b42318;
+  --danger-tint: #fdecea;
+  --sun: #c2412d;
+  --sat: #2f5fb3;
+
+  /* 분야 색: dot = 표시점, tint = 연한 바탕(시작), fg = 진한 색(마감 칩·글자) */
+  --cat-1-dot: #2f6fdb; --cat-1-tint: #e8f0fc; --cat-1-fg: #1d4e9e; /* 개인 혜택 */
+  --cat-2-dot: #d9631e; --cat-2-tint: #fcede3; --cat-2-fg: #9a4210; /* 창업 */
+  --cat-3-dot: #11867a; --cat-3-tint: #e0f3f0; --cat-3-fg: #0b5e55; /* 기업·소상공인 */
+  --cat-4-dot: #6b4fd8; --cat-4-tint: #eeeafc; --cat-4-fg: #4a33a8; /* 공공사업 */
+}
+
+@theme inline {
+  --color-ground: var(--ground);
+  --color-surface: var(--surface);
+  --color-ink: var(--ink);
+  --color-ink-2: var(--ink-2);
+  --color-muted: var(--muted);
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+  --color-danger: var(--danger);
+  --color-danger-tint: var(--danger-tint);
+  --font-sans: var(--font-plex), "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+  --font-logo: var(--font-jua), var(--font-plex), sans-serif;
+}
+
+body {
+  background: var(--ground);
+  color: var(--ink);
+  font-family: var(--font-sans);
+}

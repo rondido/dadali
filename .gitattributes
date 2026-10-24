@@ -1,0 +1,5 @@
+# 줄바꿈을 LF로 통일 (Windows의 CRLF 자동 변환으로 diff가 지저분해지는 것을 막음)
+* text=auto eol=lf
+
+*.ico binary
+*.png binary
