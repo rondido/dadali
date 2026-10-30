@@ -8,9 +8,11 @@ import { BOARD_PREVIEW_COUNT, type BoardColumn, type BoardColumnKey } from "@/ho
 
 interface StatusBoardProps {
   columns: BoardColumn[];
+  selectedId: string | null;
+  onOpen: (id: string) => void;
 }
 
-export default function StatusBoard({ columns }: StatusBoardProps) {
+export default function StatusBoard({ columns, selectedId, onOpen }: StatusBoardProps) {
   const [activeTab, setActiveTab] = useState<BoardColumnKey>("ongoing");
   const [expanded, setExpanded] = useState<Set<BoardColumnKey>>(new Set());
 
@@ -61,7 +63,7 @@ export default function StatusBoard({ columns }: StatusBoardProps) {
                 <ul className="flex flex-col gap-2">
                   {visible.map((card) => (
                     <li key={card.match.notice.id}>
-                      <NoticeCard card={card} />
+                      <NoticeCard card={card} selected={card.match.notice.id === selectedId} onOpen={onOpen} />
                     </li>
                   ))}
                 </ul>

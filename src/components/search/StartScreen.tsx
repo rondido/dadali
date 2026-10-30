@@ -21,9 +21,10 @@ interface StartScreenProps {
   today: IsoDate;
   onSearch: (text: string) => void;
   onShowAll: () => void;
+  onOpenNotice: (id: string) => void;
 }
 
-export default function StartScreen({ notices, today, onSearch, onShowAll }: StartScreenProps) {
+export default function StartScreen({ notices, today, onSearch, onShowAll, onOpenNotice }: StartScreenProps) {
   const summary = summarizeNotices(notices, today);
   const closing = closingThisWeek(notices, today).slice(0, PREVIEW_COUNT);
   // 미리보기 카드도 보드와 같은 배지·기간 막대를 쓴다
@@ -73,7 +74,7 @@ export default function StartScreen({ notices, today, onSearch, onShowAll }: Sta
           <ul className="grid gap-3 md:grid-cols-3">
             {previewCards.map((card) => (
               <li key={card.match.notice.id}>
-                <NoticeCard card={card} />
+                <NoticeCard card={card} selected={false} onOpen={onOpenNotice} />
               </li>
             ))}
           </ul>
