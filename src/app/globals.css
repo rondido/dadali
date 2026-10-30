@@ -31,12 +31,183 @@
   --color-line-strong: var(--line-strong);
   --color-danger: var(--danger);
   --color-danger-tint: var(--danger-tint);
-  --font-sans: var(--font-plex), "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
-  --font-logo: var(--font-jua), var(--font-plex), sans-serif;
+  --font-sans: "Pretendard Variable", Pretendard, -apple-system, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
 }
 
 body {
   background: var(--ground);
   color: var(--ink);
   font-family: var(--font-sans);
+}
+
+/* 월간 달력 (FullCalendar) */
+.fc {
+  --fc-border-color: var(--line);
+  --fc-page-bg-color: var(--surface);
+  --fc-neutral-bg-color: var(--ground);
+  --fc-today-bg-color: transparent;
+  --fc-button-bg-color: var(--surface);
+  --fc-button-border-color: var(--line-strong);
+  --fc-button-text-color: var(--ink);
+  --fc-button-hover-bg-color: var(--ground);
+  --fc-button-hover-border-color: var(--line-strong);
+  --fc-button-active-bg-color: var(--line);
+  --fc-button-active-border-color: var(--line-strong);
+  background: var(--surface);
+}
+
+.fc .fc-toolbar-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+.fc .fc-col-header-cell-cushion,
+.fc .fc-daygrid-day-number {
+  color: var(--ink-2);
+  font-size: 0.8125rem;
+}
+
+.fc .fc-day-sun .fc-col-header-cell-cushion,
+.fc .fc-day-sun .fc-daygrid-day-number {
+  color: var(--sun);
+}
+
+.fc .fc-day-sat .fc-col-header-cell-cushion,
+.fc .fc-day-sat .fc-daygrid-day-number {
+  color: var(--sat);
+}
+
+/* 오늘: 배경 대신 날짜 숫자에 원을 둘러 강조 */
+.fc .fc-day-today .fc-daygrid-day-number {
+  background: var(--ink);
+  color: var(--surface);
+  border-radius: 9999px;
+  min-width: 1.5rem;
+  text-align: center;
+  margin: 2px;
+  padding: 1px 4px;
+}
+
+.fc .fc-daygrid-more-link {
+  color: var(--muted);
+  font-size: 0.75rem;
+}
+
+/* 공고 칩: 분류별 색은 변수로 받고, 마감은 진하게·시작은 연하게 */
+.chip-cat-1 { --chip-fg: var(--cat-1-fg); --chip-tint: var(--cat-1-tint); }
+.chip-cat-2 { --chip-fg: var(--cat-2-fg); --chip-tint: var(--cat-2-tint); }
+.chip-cat-3 { --chip-fg: var(--cat-3-fg); --chip-tint: var(--cat-3-tint); }
+.chip-cat-4 { --chip-fg: var(--cat-4-fg); --chip-tint: var(--cat-4-tint); }
+
+.fc .fc-event.chip {
+  border: 0;
+  border-radius: 4px;
+  padding: 1px 4px;
+  margin-top: 2px;
+  font-size: 0.75rem;
+  line-height: 1.4;
+}
+
+.fc .fc-event.chip-end {
+  background: var(--chip-fg);
+  color: #fff;
+}
+
+.fc .fc-event.chip-start {
+  background: var(--chip-tint);
+  color: var(--chip-fg);
+}
+
+/* FullCalendar 기본값(흰 글자)을 덮고 칩 색을 따르게 한다 */
+.fc .fc-event.chip .fc-event-main,
+.fc .fc-event.period .fc-event-main {
+  color: inherit;
+}
+
+/* 칸반에서 고른 공고의 접수 기간 막대 (시작일 ~ 마감일) */
+.fc .fc-event.period {
+  background: var(--chip-tint);
+  border: 1.5px solid var(--chip-fg);
+  border-radius: 4px;
+  color: var(--chip-fg);
+  margin-top: 2px;
+  padding: 1px 6px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+.period-range {
+  margin-left: 6px;
+  font-weight: 500;
+}
+
+.fc .fc-event.chip-closed {
+  opacity: 0.45;
+}
+
+/* 공고명은 칸 너비에 맞게 자른다 */
+.chip-body {
+  display: block;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+/* 칸반 카드 (NoticeKanban) */
+.kanban-dot {
+  display: inline-block;
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 9999px;
+  background: var(--chip-fg);
+}
+
+.kanban-icon {
+  width: 0.75rem;
+  height: 0.75rem;
+  flex: none;
+}
+
+.chip-icon {
+  display: inline-block;
+  width: 0.75rem;
+  height: 0.75rem;
+  margin-right: 3px;
+  vertical-align: -1px;
+}
+
+/* 색 안내 (CalendarLegend). 칩과 같은 --chip-fg / --chip-tint 변수를 쓴다 */
+.legend-swatch {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1rem;
+  height: 1rem;
+  border-radius: 3px;
+}
+
+.legend-icon {
+  width: 0.625rem;
+  height: 0.625rem;
+}
+
+.legend-icon-plain {
+  width: 1rem;
+  height: 1rem;
+}
+
+.legend-swatch-neutral {
+  --chip-fg: var(--ink-2);
+  --chip-tint: var(--line);
+}
+
+.legend-swatch-end {
+  background: var(--chip-fg);
+  color: #fff;
+}
+
+.legend-swatch-start {
+  background: var(--chip-tint);
+  color: var(--chip-fg);
 }

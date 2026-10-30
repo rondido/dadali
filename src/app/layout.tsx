@@ -1,21 +1,7 @@
 import type { Metadata } from "next";
-import { IBM_Plex_Sans_KR, Jua } from "next/font/google";
+// Pretendard 가변 폰트. 글자 범위별로 나뉜 파일 중 화면에 쓰인 글자의 파일만 내려받는다
+import "pretendard/dist/web/variable/pretendardvariable-dynamic-subset.css";
 import "./globals.css";
-
-const plex = IBM_Plex_Sans_KR({
-  variable: "--font-plex",
-  weight: ["400", "500", "600", "700"],
-  subsets: ["latin"],
-  display: "swap",
-});
-
-// 로고(다달이) 전용
-const jua = Jua({
-  variable: "--font-jua",
-  weight: "400",
-  subsets: ["latin"],
-  display: "swap",
-});
 
 export const metadata: Metadata = {
   title: "다달이 - 정부지원 달력",
@@ -29,7 +15,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ko">
-      <body className={`${plex.variable} ${jua.variable} antialiased`}>{children}</body>
+      <body className="antialiased">{children}</body>
     </html>
   );
 }
