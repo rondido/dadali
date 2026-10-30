@@ -17,6 +17,9 @@ function noticeOf(overrides: Partial<Notice>): Notice {
     regionCodes: [],
     industries: [],
     topics: [],
+    detailUrl: null,
+    sourceName: "출처",
+    sourceUrl: "https://www.gov.kr",
     ...overrides,
   };
 }
