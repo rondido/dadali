@@ -25,6 +25,29 @@ export function formatStartsIn(daysUntil: number): string {
   return daysUntil === 1 ? "내일 시작" : `${daysUntil}일 후 시작`;
 }
 
+export const STATUS_LABEL: Record<NoticeStatus, string> = {
+  upcoming: "진행 예정",
+  open: "진행 중",
+  closing: "진행 중",
+  closed: "마감",
+  always: "상시",
+};
+
+export interface StatusBadge {
+  label: string; // "3일 후 시작", "D-4", "오늘 마감", "상시", "마감"
+  urgent: boolean; // 마감 7일 이내 → 빨간색
+}
+
+// 카드·상세에 붙이는 상태 배지
+export function statusBadgeOf(notice: NoticeSchedule, today: IsoDate): StatusBadge {
+  const status = noticeStatusOf(notice, today);
+  if (status === "upcoming") return { label: formatStartsIn(daysBetween(today, notice.applyStart!)), urgent: false };
+  if (status === "always") return { label: "상시", urgent: false };
+  if (status === "closed") return { label: "마감", urgent: false };
+  const label = notice.applyEnd ? formatDDay(daysBetween(today, notice.applyEnd)) : "접수 중";
+  return { label, urgent: status === "closing" };
+}
+
 export interface PeriodProgress {
   day: number; // 오늘이 접수 기간의 며칠째인지 (첫날 = 1)
   total: number; // 접수 기간 전체 일수 (시작일·마감일 포함)

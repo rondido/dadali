@@ -6,6 +6,7 @@ import {
   formatStartsIn,
   noticeStatusOf,
   periodProgressOf,
+  statusBadgeOf,
   summarizeNotices,
 } from "./noticeStatus";
 
@@ -125,5 +126,18 @@ describe("closingThisWeek", () => {
     ];
 
     expect(closingThisWeek(notices, TODAY).map((n) => n.id)).toEqual(["sooner", "later"]);
+  });
+});
+
+describe("statusBadgeOf", () => {
+  test.each([
+    [{ applyStart: "2026-11-13", applyEnd: "2026-11-30" }, { label: "3일 후 시작", urgent: false }],
+    [{ applyStart: "2026-11-01", applyEnd: "2026-11-30" }, { label: "D-20", urgent: false }],
+    [{ applyStart: "2026-11-01", applyEnd: "2026-11-14" }, { label: "D-4", urgent: true }],
+    [{ applyStart: "2026-11-01", applyEnd: "2026-11-10" }, { label: "오늘 마감", urgent: true }],
+    [{ applyStart: "2026-11-01", applyEnd: "2026-11-05" }, { label: "마감", urgent: false }],
+    [{ isAlways: true }, { label: "상시", urgent: false }],
+  ])("%o 공고에는 %o 배지를 붙입니다", (overrides, expected) => {
+    expect(statusBadgeOf(scheduleOf(overrides), TODAY)).toEqual(expected);
   });
 });

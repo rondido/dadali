@@ -1,12 +1,10 @@
 // 검색 결과를 진행 예정·진행 중·상시 세 열로 나눈다 (상태 보드 전용, 기획서 5장 상태 정의)
 // 마감된 공고는 보드에 넣지 않는다
-import { daysBetween } from "@/domain/date/daysBetween";
 import type { IsoDate, NoticeSchedule } from "@/domain/notice/notice";
 import {
-  formatDDay,
-  formatStartsIn,
   noticeStatusOf,
   periodProgressOf,
+  statusBadgeOf,
   type NoticeStatus,
   type PeriodProgress,
 } from "@/domain/notice/noticeStatus";
@@ -44,12 +42,6 @@ const COLUMNS: { key: BoardColumnKey; title: string; statuses: NoticeStatus[]; c
   { key: "always", title: "상시", statuses: ["always"], compare: byTitle },
 ];
 
-function badgeOf(notice: NoticeSchedule, status: NoticeStatus, today: IsoDate): string {
-  if (status === "upcoming") return formatStartsIn(daysBetween(today, notice.applyStart!));
-  if (status === "always") return "상시";
-  return notice.applyEnd ? formatDDay(daysBetween(today, notice.applyEnd)) : "접수 중";
-}
-
 export function toBoardColumns(matches: NoticeMatch[], today: IsoDate): BoardColumn[] {
   const withStatus = matches.map((match) => ({ match, status: noticeStatusOf(match.notice, today) }));
 
@@ -59,12 +51,9 @@ export function toBoardColumns(matches: NoticeMatch[], today: IsoDate): BoardCol
     cards: withStatus
       .filter(({ status }) => statuses.includes(status))
       .sort((a, b) => compare(a.match.notice, b.match.notice))
-      .map(({ match, status }) => ({
-        match,
-        status,
-        badge: badgeOf(match.notice, status, today),
-        urgent: status === "closing",
-        progress: periodProgressOf(match.notice, today),
-      })),
+      .map(({ match, status }) => {
+        const { label, urgent } = statusBadgeOf(match.notice, today);
+        return { match, status, badge: label, urgent, progress: periodProgressOf(match.notice, today) };
+      }),
   }));
 }
