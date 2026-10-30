@@ -11,10 +11,8 @@
   --line-strong: #c9ced6;
   --danger: #b42318;
   --danger-tint: #fdecea;
-  --sun: #c2412d;
-  --sat: #2f5fb3;
 
-  /* 분야 색: dot = 표시점, tint = 연한 바탕(시작), fg = 진한 색(마감 칩·글자) */
+  /* 분야 색: dot = 표시점, tint = 연한 바탕, fg = 진한 색(글자) */
   --cat-1-dot: #2f6fdb; --cat-1-tint: #e8f0fc; --cat-1-fg: #1d4e9e; /* 개인 혜택 */
   --cat-2-dot: #d9631e; --cat-2-tint: #fcede3; --cat-2-fg: #9a4210; /* 창업 */
   --cat-3-dot: #11867a; --cat-3-tint: #e0f3f0; --cat-3-fg: #0b5e55; /* 기업·소상공인 */
@@ -40,174 +38,23 @@ body {
   font-family: var(--font-sans);
 }
 
-/* 월간 달력 (FullCalendar) */
-.fc {
-  --fc-border-color: var(--line);
-  --fc-page-bg-color: var(--surface);
-  --fc-neutral-bg-color: var(--ground);
-  --fc-today-bg-color: transparent;
-  --fc-button-bg-color: var(--surface);
-  --fc-button-border-color: var(--line-strong);
-  --fc-button-text-color: var(--ink);
-  --fc-button-hover-bg-color: var(--ground);
-  --fc-button-hover-border-color: var(--line-strong);
-  --fc-button-active-bg-color: var(--line);
-  --fc-button-active-border-color: var(--line-strong);
-  background: var(--surface);
-}
+/* 분야 색: 클래스 하나로 --tone-dot을 정해 두고 표시점이 따라 쓴다 */
+.tone-cat-1 { --tone-dot: var(--cat-1-dot); }
+.tone-cat-2 { --tone-dot: var(--cat-2-dot); }
+.tone-cat-3 { --tone-dot: var(--cat-3-dot); }
+.tone-cat-4 { --tone-dot: var(--cat-4-dot); }
 
-.fc .fc-toolbar-title {
-  font-size: 1.25rem;
-  font-weight: 700;
-}
-
-.fc .fc-col-header-cell-cushion,
-.fc .fc-daygrid-day-number {
-  color: var(--ink-2);
-  font-size: 0.8125rem;
-}
-
-.fc .fc-day-sun .fc-col-header-cell-cushion,
-.fc .fc-day-sun .fc-daygrid-day-number {
-  color: var(--sun);
-}
-
-.fc .fc-day-sat .fc-col-header-cell-cushion,
-.fc .fc-day-sat .fc-daygrid-day-number {
-  color: var(--sat);
-}
-
-/* 오늘: 배경 대신 날짜 숫자에 원을 둘러 강조 */
-.fc .fc-day-today .fc-daygrid-day-number {
-  background: var(--ink);
-  color: var(--surface);
-  border-radius: 9999px;
-  min-width: 1.5rem;
-  text-align: center;
-  margin: 2px;
-  padding: 1px 4px;
-}
-
-.fc .fc-daygrid-more-link {
-  color: var(--muted);
-  font-size: 0.75rem;
-}
-
-/* 공고 칩: 분류별 색은 변수로 받고, 마감은 진하게·시작은 연하게 */
-.chip-cat-1 { --chip-fg: var(--cat-1-fg); --chip-tint: var(--cat-1-tint); }
-.chip-cat-2 { --chip-fg: var(--cat-2-fg); --chip-tint: var(--cat-2-tint); }
-.chip-cat-3 { --chip-fg: var(--cat-3-fg); --chip-tint: var(--cat-3-tint); }
-.chip-cat-4 { --chip-fg: var(--cat-4-fg); --chip-tint: var(--cat-4-tint); }
-
-.fc .fc-event.chip {
-  border: 0;
-  border-radius: 4px;
-  padding: 1px 4px;
-  margin-top: 2px;
-  font-size: 0.75rem;
-  line-height: 1.4;
-}
-
-.fc .fc-event.chip-end {
-  background: var(--chip-fg);
-  color: #fff;
-}
-
-.fc .fc-event.chip-start {
-  background: var(--chip-tint);
-  color: var(--chip-fg);
-}
-
-/* FullCalendar 기본값(흰 글자)을 덮고 칩 색을 따르게 한다 */
-.fc .fc-event.chip .fc-event-main,
-.fc .fc-event.period .fc-event-main {
-  color: inherit;
-}
-
-/* 칸반에서 고른 공고의 접수 기간 막대 (시작일 ~ 마감일) */
-.fc .fc-event.period {
-  background: var(--chip-tint);
-  border: 1.5px solid var(--chip-fg);
-  border-radius: 4px;
-  color: var(--chip-fg);
-  margin-top: 2px;
-  padding: 1px 6px;
-  font-size: 0.75rem;
-  font-weight: 700;
-  line-height: 1.4;
-}
-
-.period-range {
-  margin-left: 6px;
-  font-weight: 500;
-}
-
-.fc .fc-event.chip-closed {
-  opacity: 0.45;
-}
-
-/* 공고명은 칸 너비에 맞게 자른다 */
-.chip-body {
-  display: block;
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-}
-
-/* 칸반 카드 (NoticeKanban) */
-.kanban-dot {
+/* 공고 카드의 분야 표시점 (NoticeCard) */
+.cat-dot {
   display: inline-block;
   width: 0.5rem;
   height: 0.5rem;
   border-radius: 9999px;
-  background: var(--chip-fg);
+  background: var(--tone-dot);
 }
 
-.kanban-icon {
+.card-icon {
   width: 0.75rem;
   height: 0.75rem;
   flex: none;
-}
-
-.chip-icon {
-  display: inline-block;
-  width: 0.75rem;
-  height: 0.75rem;
-  margin-right: 3px;
-  vertical-align: -1px;
-}
-
-/* 색 안내 (CalendarLegend). 칩과 같은 --chip-fg / --chip-tint 변수를 쓴다 */
-.legend-swatch {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 1rem;
-  height: 1rem;
-  border-radius: 3px;
-}
-
-.legend-icon {
-  width: 0.625rem;
-  height: 0.625rem;
-}
-
-.legend-icon-plain {
-  width: 1rem;
-  height: 1rem;
-}
-
-.legend-swatch-neutral {
-  --chip-fg: var(--ink-2);
-  --chip-tint: var(--line);
-}
-
-.legend-swatch-end {
-  background: var(--chip-fg);
-  color: #fff;
-}
-
-.legend-swatch-start {
-  background: var(--chip-tint);
-  color: var(--chip-fg);
 }
