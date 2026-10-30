@@ -12,3 +12,18 @@ const seoulDateFormat = new Intl.DateTimeFormat("en-CA", {
 export function toSeoulDate(instant: Date): IsoDate {
   return seoulDateFormat.format(instant);
 }
+
+const seoulDateTimeFormat = new Intl.DateTimeFormat("ko-KR", {
+  timeZone: "Asia/Seoul",
+  month: "long",
+  day: "numeric",
+  hour: "2-digit",
+  minute: "2-digit",
+  hourCycle: "h23",
+});
+
+// "최종 갱신" 표시용: "11월 10일 05:00" (서울 기준)
+export function formatSeoulDateTime(instant: Date): string {
+  const parts = Object.fromEntries(seoulDateTimeFormat.formatToParts(instant).map((p) => [p.type, p.value]));
+  return `${parts.month} ${parts.day}일 ${parts.hour}:${parts.minute}`;
+}
