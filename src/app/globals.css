@@ -38,11 +38,11 @@ body {
   font-family: var(--font-sans);
 }
 
-/* 분야 색: 클래스 하나로 --tone-dot을 정해 두고 표시점이 따라 쓴다 */
-.tone-cat-1 { --tone-dot: var(--cat-1-dot); }
-.tone-cat-2 { --tone-dot: var(--cat-2-dot); }
-.tone-cat-3 { --tone-dot: var(--cat-3-dot); }
-.tone-cat-4 { --tone-dot: var(--cat-4-dot); }
+/* 분야 색: 클래스 하나로 --tone-* 변수를 정해 두고 표시점·기간 막대가 따라 쓴다 */
+.tone-cat-1 { --tone-dot: var(--cat-1-dot); --tone-tint: var(--cat-1-tint); --tone-fg: var(--cat-1-fg); }
+.tone-cat-2 { --tone-dot: var(--cat-2-dot); --tone-tint: var(--cat-2-tint); --tone-fg: var(--cat-2-fg); }
+.tone-cat-3 { --tone-dot: var(--cat-3-dot); --tone-tint: var(--cat-3-tint); --tone-fg: var(--cat-3-fg); }
+.tone-cat-4 { --tone-dot: var(--cat-4-dot); --tone-tint: var(--cat-4-tint); --tone-fg: var(--cat-4-fg); }
 
 /* 공고 카드의 분야 표시점 (NoticeCard) */
 .cat-dot {
@@ -57,4 +57,50 @@ body {
   width: 0.75rem;
   height: 0.75rem;
   flex: none;
+}
+
+/* 기간 달력 (PeriodCalendar): 남은 기간은 분야 색으로 진하게, 지난 기간은 회색으로 흐리게 */
+.period-day {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 2rem;
+  font-size: 0.75rem;
+  color: var(--ink-2);
+}
+
+.period-day[data-period="remaining"] {
+  background: var(--tone-tint);
+  color: var(--tone-fg);
+  font-weight: 600;
+}
+
+.period-day[data-period="elapsed"] {
+  background: var(--line);
+  color: var(--muted);
+}
+
+/* 막대 양 끝: 시작·마감일과 주의 첫날·마지막 날은 둥글게 */
+.period-day[data-edge~="left"] { border-top-left-radius: 9999px; border-bottom-left-radius: 9999px; }
+.period-day[data-edge~="right"] { border-top-right-radius: 9999px; border-bottom-right-radius: 9999px; }
+
+/* 시작·마감일: 진한 원 */
+.period-day .period-mark {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 9999px;
+}
+
+.period-day[data-mark] .period-mark {
+  background: var(--tone-fg);
+  color: #fff;
+}
+
+/* 오늘: 테두리 */
+.period-day[data-today] .period-mark {
+  box-shadow: 0 0 0 2px var(--ink);
 }
