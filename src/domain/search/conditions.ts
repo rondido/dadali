@@ -1,6 +1,10 @@
 // 검색 조건 (해석 칩)과 URL 주소 사이의 변환 (기획서 7-1장 저장과 공유)
 // 예: /?region=11&age=youth&biz=retail&topic=facility. 입력 문장은 URL에 넣지 않는다
 import {
+  AGE_GROUPS,
+  INDUSTRIES,
+  REGIONS,
+  TOPICS,
   ageLabel,
   industryLabel,
   regionLabel,
@@ -60,6 +64,24 @@ export function toChips(conditions: SearchConditions): ConditionChip[] {
   if (conditions.biz) chips.push({ kind: "biz", value: conditions.biz });
   for (const topic of conditions.topics) chips.push({ kind: "topic", value: topic });
   return chips;
+}
+
+// 조건을 직접 고르는 화면("+ 조건 추가", 첫 화면 선택형)이 함께 쓰는 항목 순서와 선택지
+export const CONDITION_FIELDS = [
+  { kind: "region", label: CHIP_KIND_LABEL.region, options: REGIONS },
+  { kind: "age", label: CHIP_KIND_LABEL.age, options: AGE_GROUPS },
+  { kind: "biz", label: CHIP_KIND_LABEL.biz, options: INDUSTRIES },
+  { kind: "topic", label: CHIP_KIND_LABEL.topic, options: TOPICS },
+] as const;
+
+export function hasChip(conditions: SearchConditions, chip: ConditionChip): boolean {
+  if (chip.kind === "topic") return conditions.topics.includes(chip.value);
+  return conditions[chip.kind] === chip.value;
+}
+
+// 고른 값을 다시 누르면 빼고, 아니면 고른다
+export function toggleChip(conditions: SearchConditions, chip: ConditionChip): SearchConditions {
+  return hasChip(conditions, chip) ? withoutChip(conditions, chip) : withChip(conditions, chip);
 }
 
 export function withoutChip(conditions: SearchConditions, chip: ConditionChip): SearchConditions {

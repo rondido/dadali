@@ -6,6 +6,7 @@ import { useEffect, useMemo, useRef } from "react";
 import StatusBoard from "@/components/board/StatusBoard";
 import NoticePanel from "@/components/notice/NoticePanel";
 import ConditionBar from "@/components/search/ConditionBar";
+import RecommendedNotices from "@/components/search/RecommendedNotices";
 import SearchBox from "@/components/search/SearchBox";
 import StartScreen from "@/components/search/StartScreen";
 import type { Notice } from "@/domain/notice/notice";
@@ -13,6 +14,7 @@ import { summarizeNotices } from "@/domain/notice/noticeStatus";
 import { chipLabel, hasConditions, toChips } from "@/domain/search/conditions";
 import type { DictionaryEntry } from "@/domain/search/interpretQuery";
 import { matchNotices } from "@/domain/search/matchNotices";
+import { recommendNotices } from "@/domain/search/recommendNotices";
 import { toBoardColumns } from "@/hooks/board/boardColumns";
 import { useSearch } from "@/hooks/search/useSearch";
 import { useSeoulToday } from "@/hooks/ui/useSeoulToday";
@@ -32,6 +34,10 @@ export default function SearchHome({ notices, dictionary, syncedAt }: SearchHome
     [notices, search.conditions, search.unknownTerms],
   );
   const columns = useMemo(() => (today ? toBoardColumns(matches, today) : []), [matches, today]);
+  const recommended = useMemo(
+    () => (today ? recommendNotices(matches, search.conditions, today) : []),
+    [matches, search.conditions, today],
+  );
   const selectedNotice = notices.find((n) => n.id === search.selectedNoticeId) ?? null;
 
   // 패널을 닫으면 키보드 초점을 그 공고 카드로 돌려준다
@@ -42,7 +48,12 @@ export default function SearchHome({ notices, dictionary, syncedAt }: SearchHome
       return;
     }
     if (lastOpenedId.current) {
-      document.querySelector<HTMLElement>(`[data-notice-id="${lastOpenedId.current}"]`)?.focus();
+      // 보드 카드가 "더보기" 안에 접혀 있으면 "먼저 볼 공고"의 같은 공고로 돌려준다
+      const id = lastOpenedId.current;
+      const target =
+        document.querySelector<HTMLElement>(`[data-notice-id="${id}"]`) ??
+        document.querySelector<HTMLElement>(`[data-recommended-id="${id}"]`);
+      target?.focus();
       lastOpenedId.current = null;
     }
   }, [search.selectedNoticeId]);
@@ -54,11 +65,13 @@ export default function SearchHome({ notices, dictionary, syncedAt }: SearchHome
 
   if (!search.showResults) {
     return (
-      <div className="min-h-0 flex-1 overflow-y-auto">
+      // key: 결과 화면과 스크롤 영역을 공유하면 첫 화면 아래쪽에서 누른 스크롤 위치가 결과 화면에 남는다
+      <div key="start" className="min-h-0 flex-1 overflow-y-auto">
         <StartScreen
           notices={notices}
           today={today}
           onSearch={search.search}
+          onApplyConditions={search.applyConditions}
           onShowAll={search.showAll}
           onOpenNotice={search.openNotice}
         />
@@ -74,7 +87,7 @@ export default function SearchHome({ notices, dictionary, syncedAt }: SearchHome
   const filtered = hasConditions(search.conditions) || usedKeywords.length > 0;
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto md:overflow-hidden">
+    <div key="results" className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto md:overflow-hidden">
       <div className="flex shrink-0 flex-col gap-3">
         <SearchBox size="compact" onSearch={search.search} />
 
@@ -101,6 +114,16 @@ export default function SearchHome({ notices, dictionary, syncedAt }: SearchHome
             이번 주 마감 <strong className="text-danger">{summary.closingThisWeek}건</strong> · 7일 안에 시작{" "}
             <strong>{summary.startingSoon}건</strong>
           </p>
+        )}
+
+        {/* 결과가 한 건이면 보드와 똑같아지므로 두 건 이상일 때만 보여준다 */}
+        {total > 1 && recommended.length > 0 && (
+          <RecommendedNotices
+            items={recommended}
+            today={today}
+            selectedId={search.selectedNoticeId}
+            onOpen={search.openNotice}
+          />
         )}
       </div>
 
