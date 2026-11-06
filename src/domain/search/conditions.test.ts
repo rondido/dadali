@@ -6,12 +6,35 @@ import {
   conditionsToParams,
   hasConditions,
   toChips,
+  toggleChip,
   withChip,
   withoutChip,
   type SearchConditions,
 } from "./conditions";
 
 const FULL: SearchConditions = { region: "11", age: "youth", biz: "retail", topics: ["facility", "fund"] };
+
+describe("toggleChip", () => {
+  it("고르지 않은 지역을 누르면 그 지역을 고릅니다", () => {
+    expect(toggleChip(EMPTY_CONDITIONS, { kind: "region", value: "11" }).region).toBe("11");
+  });
+
+  it("이미 고른 지역을 다시 누르면 뺍니다", () => {
+    expect(toggleChip(FULL, { kind: "region", value: "11" }).region).toBeNull();
+  });
+
+  it("다른 지역을 누르면 하나만 남도록 바꿉니다", () => {
+    expect(toggleChip(FULL, { kind: "region", value: "26" }).region).toBe("26");
+  });
+
+  it("관심 주제는 여러 개를 함께 고릅니다", () => {
+    expect(toggleChip(FULL, { kind: "topic", value: "house" }).topics).toEqual(["facility", "fund", "house"]);
+  });
+
+  it("이미 고른 관심 주제를 다시 누르면 그 주제만 뺍니다", () => {
+    expect(toggleChip(FULL, { kind: "topic", value: "facility" }).topics).toEqual(["fund"]);
+  });
+});
 
 describe("conditionsToParams / conditionsFromParams", () => {
   it("조건을 기획서의 URL 형식으로 바꿉니다", () => {

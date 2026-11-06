@@ -2,9 +2,11 @@
 
 // 첫 화면 (기획서 P01): 큰 입력창, 예시 문장 4개, 저장 안 함 고지, 이번 주 마감 미리보기 (F01, F11)
 import NoticeCard from "@/components/board/NoticeCard";
+import ConditionPicker from "@/components/search/ConditionPicker";
 import SearchBox from "@/components/search/SearchBox";
 import type { IsoDate, Notice } from "@/domain/notice/notice";
 import { closingThisWeek, summarizeNotices } from "@/domain/notice/noticeStatus";
+import type { SearchConditions } from "@/domain/search/conditions";
 import { toBoardColumns } from "@/hooks/board/boardColumns";
 
 const EXAMPLES = [
@@ -20,11 +22,19 @@ interface StartScreenProps {
   notices: Notice[];
   today: IsoDate;
   onSearch: (text: string) => void;
+  onApplyConditions: (conditions: SearchConditions) => void;
   onShowAll: () => void;
   onOpenNotice: (id: string) => void;
 }
 
-export default function StartScreen({ notices, today, onSearch, onShowAll, onOpenNotice }: StartScreenProps) {
+export default function StartScreen({
+  notices,
+  today,
+  onSearch,
+  onApplyConditions,
+  onShowAll,
+  onOpenNotice,
+}: StartScreenProps) {
   const summary = summarizeNotices(notices, today);
   const closing = closingThisWeek(notices, today).slice(0, PREVIEW_COUNT);
   // 미리보기 카드도 보드와 같은 배지·기간 막대를 쓴다
@@ -59,6 +69,13 @@ export default function StartScreen({ notices, today, onSearch, onShowAll, onOpe
             ))}
           </ul>
         </div>
+      </section>
+
+      <section aria-labelledby="picker-title" className="flex flex-col gap-3">
+        <h2 id="picker-title" className="text-lg font-bold">
+          문장 대신 골라서 찾기
+        </h2>
+        <ConditionPicker notices={notices} today={today} onApply={onApplyConditions} />
       </section>
 
       <section aria-labelledby="closing-title" className="flex flex-col gap-3">

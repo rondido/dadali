@@ -17,6 +17,8 @@ test.beforeEach(async ({ page }) => {
   await page.clock.setFixedTime(new Date("2026-11-10T09:00:00+09:00"));
   await page.goto("/");
   await page.getByRole("button", { name: "전체 지원사업 보기" }).click();
+  // 보드로 바뀔 때까지 기다립니다: 첫 화면 "이번 주 마감"에도 같은 공고 카드가 있어, 바로 누르면 그 카드가 눌립니다
+  await expect(page).toHaveURL(/all=1/);
 });
 
 test.describe("카드를 누르면", () => {
@@ -109,12 +111,22 @@ test.describe("패널 닫기", () => {
 
   test("뒤로 가기를 누르면 보드는 그대로 두고 패널만 닫습니다", async ({ page }) => {
     await openCard(page, SEOUL);
-    // 패널을 연 주소 이동이 끝난 뒤에 뒤로 갑니다 (그 전에 누르면 첫 화면까지 돌아갑니다)
+    // 패널을 연 주소 이동이 끝난 뒤에 뒤로 갑니다 (그 전에 누르면 패널을 연 기록이 아직 없습니다)
     await expect(page).toHaveURL(/notice=s25/);
     await page.goBack();
 
     await expect(panel(page)).toHaveCount(0);
     await expect(page.getByRole("region", { name: "진행 중", exact: true })).toBeVisible();
+  });
+
+  test("첫 화면의 이번 주 마감 카드로 연 패널은 뒤로 가기를 누르면 첫 화면으로 돌아갑니다", async ({ page }) => {
+    await page.goto("/");
+    await page.getByRole("region", { name: /이번 주 마감/ }).getByRole("button", { name: SEOUL, exact: true }).click();
+    await expect(page).toHaveURL(/notice=s25/);
+    await page.goBack();
+
+    await expect(panel(page)).toHaveCount(0);
+    await expect(page.getByRole("button", { name: "지원사업 찾기" })).toBeVisible();
   });
 
   test("공고가 담긴 주소로 바로 들어오면 패널이 열린 채로 보입니다", async ({ page }) => {

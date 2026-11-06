@@ -80,6 +80,11 @@ export function useSearch(dictionary: DictionaryEntry[]) {
       setNotes({ regionChoices: result.regionChoices, unknownTerms: result.unknownTerms });
       go(result.conditions);
     },
+    // 첫 화면에서 직접 고른 조건으로 찾는다. 해석한 문장이 없으므로 안내도 비운다
+    applyConditions(next: SearchConditions) {
+      setNotes(NO_NOTES);
+      go(next);
+    },
     // 칩 ×: 그 자리에서 다시 거른다
     removeChip(chip: ConditionChip) {
       go(withoutChip(conditions, chip), "replace");
