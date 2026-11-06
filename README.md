@@ -33,7 +33,7 @@ npm run explore
 
 ## 2단계: DB 만들기
 
-1. Supabase 프로젝트를 만들고 Connection string(Transaction pooler)을 `.env.local`의 `DATABASE_URL`에 넣습니다.
+1. Supabase 프로젝트를 만들고 Connect > Connection String에서 Session pooler 주소를 복사해 `.env.local`의 `DATABASE_URL`에 넣습니다. 비밀번호는 대괄호 없이 넣고, 특수문자는 URL 인코딩합니다(예: `@` → `%40`).
 2. 테이블을 만듭니다.
 
 ```bash
