@@ -16,11 +16,6 @@
     "db:studio": "drizzle-kit studio"
   },
   "dependencies": {
-    "@fullcalendar/core": "6.1.22",
-    "@fullcalendar/daygrid": "6.1.22",
-    "@fullcalendar/interaction": "6.1.22",
-    "@fullcalendar/list": "6.1.22",
-    "@fullcalendar/react": "6.1.22",
     "date-fns": "^4.4.0",
     "drizzle-orm": "^0.45.4",
     "next": "15.5.28",

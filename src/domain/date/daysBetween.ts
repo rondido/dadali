@@ -1,4 +1,4 @@
-import type { IsoDate } from "@/domain/notice/noticeMarkers";
+import type { IsoDate } from "@/domain/notice/notice";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
