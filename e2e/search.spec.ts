@@ -2,6 +2,7 @@
 import { expect, test, type Page } from "@playwright/test";
 
 const SCENARIO = "서울에서 카페 하는 32살인데 가게 인테리어 지원 있나요?";
+const EXAMPLE = "서울 카페 인테리어";
 
 async function searchFor(page: Page, text: string) {
   await page.getByRole("searchbox", { name: "내 상황" }).fill(text);
@@ -26,16 +27,20 @@ test.describe("입력 전 첫 화면", () => {
   test("입력창과 저장하지 않는다는 고지, 예시 문장 4개를 보여줍니다", async ({ page }) => {
     await expect(page.getByRole("searchbox", { name: "내 상황" })).toBeVisible();
     await expect(page.getByText("입력한 문장은 조건을 찾는 데만 쓰고 저장하지 않아요.")).toBeVisible();
-    await expect(page.getByRole("button", { name: SCENARIO })).toBeVisible();
+    await expect(page.getByRole("list", { name: "예시 문장" }).getByRole("button")).toHaveCount(4);
+    await expect(page.getByRole("button", { name: EXAMPLE })).toBeVisible();
     await expect(page.getByRole("button", { name: "창업 지원금" })).toBeVisible();
   });
 
-  test("진행 중·이번 주 마감 건수와 마감이 가까운 카드를 보여줍니다", async ({ page }) => {
-    const closing = page.getByRole("region", { name: /이번 주 마감/ });
+  test("검색창에 집중하도록 공고 카드 없이 건수 한 줄과 전체 보기 링크만 보여줍니다", async ({ page }) => {
+    await expect(page.getByText(/지금 진행 중 11건 · 이번 주 마감\s*2건/)).toBeVisible();
+    await expect(page.getByRole("button", { name: "전체 지원사업 보기" })).toBeVisible();
+    await expect(page.getByRole("article")).toHaveCount(0);
+  });
 
-    await expect(closing).toContainText("지금 전국에서 진행 중 11건 · 이번 주 마감 2건");
-    await expect(closing.getByRole("article")).toHaveCount(2);
-    await expect(closing.getByRole("article").first()).toContainText("샘플 서울 소상공인 점포 환경개선 지원");
+  test("서비스 이름과 슬로건을 가운데에 크게 보여줍니다", async ({ page }) => {
+    await expect(page.getByRole("heading", { level: 1 })).toHaveText("혜택톡톡");
+    await expect(page.getByText("이번 달 정부지원, 한눈에")).toBeVisible();
   });
 });
 

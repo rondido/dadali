@@ -13,7 +13,7 @@ describe("Home", () => {
   it("서비스명과 슬로건을 보여줍니다", () => {
     render(<Home />);
 
-    expect(screen.getByText("다달이")).toBeInTheDocument();
+    expect(screen.getByText("혜택톡톡")).toBeInTheDocument();
     expect(screen.getByText("이번 달 정부지원, 한눈에")).toBeInTheDocument();
   });
 

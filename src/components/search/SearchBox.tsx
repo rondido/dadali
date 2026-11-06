@@ -18,7 +18,11 @@ export default function SearchBox({ size, onSearch }: SearchBoxProps) {
   };
 
   return (
-    <form role="search" onSubmit={submit} className="flex flex-col gap-2 sm:flex-row">
+    <form
+      role="search"
+      onSubmit={submit}
+      className={large ? "flex flex-col gap-2 sm:flex-row" : "flex min-w-0 flex-1 gap-2"}
+    >
       <label htmlFor="situation" className="sr-only">
         내 상황
       </label>
@@ -29,13 +33,15 @@ export default function SearchBox({ size, onSearch }: SearchBoxProps) {
         onChange={(e) => setText(e.target.value)}
         placeholder={large ? "예: 서울에서 카페 하는 32살인데 가게 인테리어 지원 있나요?" : "다른 상황으로 다시 찾기"}
         autoComplete="off"
-        className={`min-h-11 flex-1 rounded-lg border border-line-strong bg-surface px-4 text-ink placeholder:text-muted focus:border-ink focus:outline-none ${
-          large ? "py-4 text-lg" : "py-2"
+        className={`min-h-11 min-w-0 flex-1 rounded-lg border border-line-strong bg-surface text-ink placeholder:text-muted focus:border-ink focus:outline-none ${
+          large ? "px-4 py-4 text-lg" : "px-3 py-1.5 md:px-4"
         }`}
       />
       <button
         type="submit"
-        className={`min-h-11 rounded-lg bg-ink px-5 font-semibold text-surface hover:bg-ink-2 ${large ? "py-4 text-lg" : "py-2"}`}
+        className={`min-h-11 shrink-0 whitespace-nowrap rounded-lg bg-ink font-semibold text-surface hover:bg-ink-2 ${
+          large ? "px-5 py-4 text-lg" : "px-3 py-1.5 md:px-5"
+        }`}
       >
         {large ? "지원사업 찾기" : "다시 찾기"}
       </button>

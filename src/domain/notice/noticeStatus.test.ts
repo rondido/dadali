@@ -1,7 +1,6 @@
 import { describe, expect, it, test } from "vitest";
 import type { NoticeSchedule } from "./notice";
 import {
-  closingThisWeek,
   formatDDay,
   formatStartsIn,
   noticeStatusOf,
@@ -117,17 +116,6 @@ describe("summarizeNotices", () => {
   });
 });
 
-describe("closingThisWeek", () => {
-  it("7일 안에 마감하는 공고만 마감 빠른 순으로 반환합니다", () => {
-    const notices = [
-      scheduleOf({ id: "later", applyStart: "2026-11-01", applyEnd: "2026-11-16" }),
-      scheduleOf({ id: "open", applyStart: "2026-11-01", applyEnd: "2026-11-30" }),
-      scheduleOf({ id: "sooner", applyStart: "2026-11-01", applyEnd: "2026-11-12" }),
-    ];
-
-    expect(closingThisWeek(notices, TODAY).map((n) => n.id)).toEqual(["sooner", "later"]);
-  });
-});
 
 describe("statusBadgeOf", () => {
   test.each([

@@ -7,7 +7,7 @@ import { formatMonthDay, toPeriodCalendar, type CalendarDay, type CalendarMonth 
 const WEEKDAYS = ["일", "월", "화", "수", "목", "금", "토"];
 
 // 블록 수별 넓은 화면 배치: 두 달은 나란히, 접은 경우(시작 달 · … N주 … · 마감 달)는 가운데를 좁게
-const MONTH_COLUMNS: Record<number, string> = { 2: "xl:grid-cols-2", 3: "xl:grid-cols-[1fr_auto_1fr]" };
+const MONTH_COLUMNS: Record<number, string> = { 2: "2xl:grid-cols-2", 3: "2xl:grid-cols-[1fr_auto_1fr]" };
 
 interface PeriodCalendarProps {
   start: IsoDate;
@@ -45,7 +45,7 @@ function MonthTable({ month }: { month: CalendarMonth }) {
       <thead>
         <tr>
           {WEEKDAYS.map((w) => (
-            <th key={w} scope="col" className="pb-1 text-[11px] font-normal text-muted">
+            <th key={w} scope="col" className="pb-1 text-xs font-normal text-muted">
               {w}
             </th>
           ))}
@@ -78,7 +78,7 @@ export default function PeriodCalendar({ start, end, today }: PeriodCalendarProp
       <figcaption className="sr-only">
         접수 기간 {formatMonthDay(start)}부터 {formatMonthDay(end)}까지
       </figcaption>
-      {/* 두 달은 넓은 화면에서 나란히, 좁은 화면에서 위아래로 */}
+      {/* 두 달은 패널이 넓은 화면에서 나란히, 그 외에는 위아래로 */}
       <div className={`grid gap-4 ${MONTH_COLUMNS[blocks.length] ?? ""}`}>
         {blocks.map((block, i) =>
           block.kind === "month" ? (

@@ -1,6 +1,6 @@
 "use client";
 
-// 공고 상세 패널 (기획서 P04, F08·F10·F12). 보드를 떠나지 않고 카드 옆(PC) 또는 아래에서 올라오는 시트(모바일)로 연다
+// 공고 상세 패널 (기획서 P04, F08·F10·F12). 보드를 떠나지 않고 카드 옆(1280px 이상), 보드 위 오른쪽(태블릿), 아래에서 올라오는 시트(모바일)로 연다
 // 위에서부터: 남은 기간(D-day·기간 달력) → 대상 → 출처 → 원문 공고 보기. 이동 전 확인 창은 두지 않는다
 import { useEffect, useRef } from "react";
 import PeriodCalendar from "@/components/notice/PeriodCalendar";
@@ -60,18 +60,18 @@ export default function NoticePanel({ notice, today, syncedAt, onClose }: Notice
 
   return (
     <>
-      {/* 모바일: 뒤 보드를 흐리게 덮고, 누르면 닫는다 */}
+      {/* 보드 옆에 둘 자리가 없는 화면: 뒤 보드를 흐리게 덮고, 누르면 닫는다 */}
       <button
         type="button"
         aria-label="상세 닫기"
         tabIndex={-1}
         onClick={onClose}
-        className="fixed inset-0 z-30 bg-ink/30 md:hidden"
+        className="fixed inset-0 z-30 bg-ink/30 xl:hidden"
       />
 
       <aside
         aria-labelledby="notice-panel-title"
-        className={`fixed inset-x-0 bottom-0 z-40 flex max-h-[85dvh] flex-col rounded-t-2xl bg-surface shadow-xl md:static md:z-auto md:max-h-none md:w-[26rem] md:shrink-0 md:rounded-lg md:shadow-none md:ring-1 md:ring-line xl:w-[34rem] ${
+        className={`fixed inset-x-0 bottom-0 z-40 flex max-h-[85dvh] flex-col rounded-t-2xl bg-surface shadow-xl md:inset-x-auto md:inset-y-4 md:right-4 md:max-h-none md:w-[26rem] md:rounded-lg md:ring-1 md:ring-line xl:static xl:z-auto xl:shrink-0 xl:shadow-none 2xl:w-[34rem] ${
           notice ? `tone-${colorTokenOf(notice.categoryId)}` : ""
         }`}
       >

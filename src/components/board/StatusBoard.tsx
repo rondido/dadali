@@ -4,15 +4,17 @@
 // 모바일에서는 세 열을 탭으로 바꾸고 기본 탭은 진행 중
 import { useState } from "react";
 import NoticeCard from "@/components/board/NoticeCard";
-import { BOARD_PREVIEW_COUNT, type BoardColumn, type BoardColumnKey } from "@/hooks/board/boardColumns";
+import type { BoardColumn, BoardColumnKey } from "@/hooks/board/boardColumns";
+import { visibleCards } from "@/hooks/board/visibleCards";
 
 interface StatusBoardProps {
   columns: BoardColumn[];
+  recommendedIds: ReadonlySet<string>; // "먼저 보기"를 붙일 공고
   selectedId: string | null;
   onOpen: (id: string) => void;
 }
 
-export default function StatusBoard({ columns, selectedId, onOpen }: StatusBoardProps) {
+export default function StatusBoard({ columns, recommendedIds, selectedId, onOpen }: StatusBoardProps) {
   const [activeTab, setActiveTab] = useState<BoardColumnKey>("ongoing");
   const [expanded, setExpanded] = useState<Set<BoardColumnKey>>(new Set());
 
@@ -41,8 +43,7 @@ export default function StatusBoard({ columns, selectedId, onOpen }: StatusBoard
 
       <div className="grid gap-3 md:grid-cols-3">
         {columns.map((column) => {
-          const isExpanded = expanded.has(column.key);
-          const visible = isExpanded ? column.cards : column.cards.slice(0, BOARD_PREVIEW_COUNT);
+          const visible = visibleCards(column.cards, expanded.has(column.key), recommendedIds);
           const hiddenCount = column.cards.length - visible.length;
 
           return (
@@ -63,7 +64,12 @@ export default function StatusBoard({ columns, selectedId, onOpen }: StatusBoard
                 <ul className="flex flex-col gap-2">
                   {visible.map((card) => (
                     <li key={card.match.notice.id}>
-                      <NoticeCard card={card} selected={card.match.notice.id === selectedId} onOpen={onOpen} />
+                      <NoticeCard
+                        card={card}
+                        recommended={recommendedIds.has(card.match.notice.id)}
+                        selected={card.match.notice.id === selectedId}
+                        onOpen={onOpen}
+                      />
                     </li>
                   ))}
                 </ul>

@@ -1,7 +1,7 @@
 "use client";
 
-// 첫 화면 선택형 찾기: 문장을 쓰지 않아도 지역·나이대·하는 일·관심을 눌러 고르면 결과로 간다
-// 입력창과 같은 조건 값을 쓰므로 결과 화면의 칩·URL·저장도 그대로 이어진다
+// 선택형 찾기: 문장에서 조건을 하나도 찾지 못했을 때 지역·나이대·하는 일·관심을 눌러 고르게 한다
+// 입력창과 같은 조건 값을 쓰므로 칩·URL·저장도 그대로 이어진다
 import { useState } from "react";
 import type { IsoDate, Notice } from "@/domain/notice/notice";
 import { noticeStatusOf } from "@/domain/notice/noticeStatus";

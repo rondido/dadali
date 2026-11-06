@@ -18,7 +18,7 @@ export default function AddCondition({ onAdd }: AddConditionProps) {
         aria-expanded={open}
         aria-controls="add-condition"
         onClick={() => setOpen((v) => !v)}
-        className="min-h-9 rounded-full border border-dashed border-line-strong px-3 text-sm text-ink-2 hover:bg-surface"
+        className="min-h-11 shrink-0 whitespace-nowrap rounded-full border border-dashed border-line-strong px-3 text-sm text-ink-2 hover:bg-surface md:min-h-9"
       >
         + 조건 추가
       </button>
@@ -35,7 +35,7 @@ export default function AddCondition({ onAdd }: AddConditionProps) {
                   onAdd({ kind: field.kind, value: e.target.value } as ConditionChip);
                   setOpen(false);
                 }}
-                className="min-h-9 rounded border border-line-strong bg-surface px-2 text-ink"
+                className="min-h-11 rounded border border-line-strong bg-surface px-2 text-ink md:min-h-9"
               >
                 <option value="" disabled>
                   선택
