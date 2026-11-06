@@ -1,6 +1,6 @@
 -- 다달이 읽기 전용 보안 정책 (기획서 12장)
--- 테이블을 만든 뒤(npm run db:push) Supabase > SQL Editor에서 한 번 실행하세요.
--- 공개 키(anon)는 읽기만, 쓰기는 서비스 키를 쓰는 수집 스크립트만 할 수 있습니다.
+-- 테이블을 만든 뒤(npm run db:push) Supabase > SQL Editor에서 실행하세요. 여러 번 실행해도 됩니다.
+-- 공개 키(anon)는 읽기만 할 수 있고, 쓰기는 DATABASE_URL로 접속하는 수집 스크립트만 할 수 있습니다.
 
 alter table category      enable row level security;
 alter table site          enable row level security;
@@ -8,6 +8,13 @@ alter table region_agency enable row level security;
 alter table event         enable row level security;
 alter table notice        enable row level security;
 alter table sync_log      enable row level security;
+
+drop policy if exists "public read" on category;
+drop policy if exists "public read" on site;
+drop policy if exists "public read" on region_agency;
+drop policy if exists "public read" on event;
+drop policy if exists "public read" on sync_log;
+drop policy if exists "public read visible" on notice;
 
 create policy "public read" on category      for select to anon using (true);
 create policy "public read" on site          for select to anon using (true);
