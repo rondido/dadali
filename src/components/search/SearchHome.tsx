@@ -6,7 +6,7 @@ import { useEffect, useMemo, useRef } from "react";
 import StatusBoard from "@/components/board/StatusBoard";
 import NoticePanel from "@/components/notice/NoticePanel";
 import ConditionBar from "@/components/search/ConditionBar";
-import RecommendedNotices from "@/components/search/RecommendedNotices";
+import ConditionPicker from "@/components/search/ConditionPicker";
 import SearchBox from "@/components/search/SearchBox";
 import StartScreen from "@/components/search/StartScreen";
 import type { Notice } from "@/domain/notice/notice";
@@ -34,10 +34,12 @@ export default function SearchHome({ notices, dictionary, syncedAt }: SearchHome
     [notices, search.conditions, search.unknownTerms],
   );
   const columns = useMemo(() => (today ? toBoardColumns(matches, today) : []), [matches, today]);
-  const recommended = useMemo(
-    () => (today ? recommendNotices(matches, search.conditions, today) : []),
-    [matches, search.conditions, today],
-  );
+  const total = columns.reduce((sum, column) => sum + column.cards.length, 0);
+  // 결과가 한 건이면 표시할 이유가 없다. 보드 카드에 "먼저 보기"로 붙인다
+  const recommendedIds = useMemo(() => {
+    if (!today || total <= 1) return new Set<string>();
+    return new Set(recommendNotices(matches, search.conditions, today).map((m) => m.notice.id));
+  }, [matches, search.conditions, today, total]);
   const selectedNotice = notices.find((n) => n.id === search.selectedNoticeId) ?? null;
 
   // 패널을 닫으면 키보드 초점을 그 공고 카드로 돌려준다
@@ -48,12 +50,7 @@ export default function SearchHome({ notices, dictionary, syncedAt }: SearchHome
       return;
     }
     if (lastOpenedId.current) {
-      // 보드 카드가 "더보기" 안에 접혀 있으면 "먼저 볼 공고"의 같은 공고로 돌려준다
-      const id = lastOpenedId.current;
-      const target =
-        document.querySelector<HTMLElement>(`[data-notice-id="${id}"]`) ??
-        document.querySelector<HTMLElement>(`[data-recommended-id="${id}"]`);
-      target?.focus();
+      document.querySelector<HTMLElement>(`[data-notice-id="${lastOpenedId.current}"]`)?.focus();
       lastOpenedId.current = null;
     }
   }, [search.selectedNoticeId]);
@@ -65,31 +62,28 @@ export default function SearchHome({ notices, dictionary, syncedAt }: SearchHome
 
   if (!search.showResults) {
     return (
-      // key: 결과 화면과 스크롤 영역을 공유하면 첫 화면 아래쪽에서 누른 스크롤 위치가 결과 화면에 남는다
       <div key="start" className="min-h-0 flex-1 overflow-y-auto">
-        <StartScreen
-          notices={notices}
-          today={today}
-          onSearch={search.search}
-          onApplyConditions={search.applyConditions}
-          onShowAll={search.showAll}
-          onOpenNotice={search.openNotice}
-        />
+        <StartScreen notices={notices} today={today} onSearch={search.search} onShowAll={search.showAll} />
       </div>
     );
   }
 
-  const total = columns.reduce((sum, column) => sum + column.cards.length, 0);
   const summary = summarizeNotices(
     matches.map((m) => m.notice),
     today,
   );
   const filtered = hasConditions(search.conditions) || usedKeywords.length > 0;
+  // 문장에서 아무것도 알아듣지 못했을 때만 직접 고르는 선택지를 펼친다
+  const understoodNothing =
+    !hasConditions(search.conditions) && search.unknownTerms.length > 0 && usedKeywords.length === 0;
 
   return (
     <div key="results" className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto md:overflow-hidden">
-      <div className="flex shrink-0 flex-col gap-3">
-        <SearchBox size="compact" onSearch={search.search} />
+      <div className="flex shrink-0 flex-col gap-2">
+        <div className="flex items-center gap-3">
+          <p className="shrink-0 text-xl font-extrabold tracking-tight">혜택톡톡</p>
+          <SearchBox size="compact" onSearch={search.search} />
+        </div>
 
         <ConditionBar
           conditions={search.conditions}
@@ -98,37 +92,40 @@ export default function SearchHome({ notices, dictionary, syncedAt }: SearchHome
           usedKeywords={usedKeywords}
           onRemove={search.removeChip}
           onAdd={search.addChip}
+          trailing={
+            <div className="flex w-full flex-wrap items-baseline gap-x-3 md:ml-auto md:w-auto">
+              <h1 className="font-bold">
+                {filtered ? `조건에 맞을 수 있는 지원사업 ${total}건` : `전체 지원사업 ${total}건`}
+              </h1>
+              {total > 0 && (
+                <p className="text-sm text-ink-2">
+                  이번 주 마감 <strong className="text-danger">{summary.closingThisWeek}건</strong> · 7일 안에 시작{" "}
+                  <strong>{summary.startingSoon}건</strong>
+                </p>
+              )}
+              <button
+                type="button"
+                onClick={search.startOver}
+                className="text-sm text-ink-2 underline underline-offset-2"
+              >
+                처음부터 새로 찾기
+              </button>
+            </div>
+          }
         />
-
-        <div className="flex flex-wrap items-baseline justify-between gap-2">
-          <h1 className="text-xl font-bold">
-            {filtered ? `조건에 맞을 수 있는 지원사업 ${total}건` : `전체 지원사업 ${total}건`}
-          </h1>
-          <button type="button" onClick={search.startOver} className="text-sm text-ink-2 underline underline-offset-2">
-            처음부터 새로 찾기
-          </button>
-        </div>
-
-        {total > 0 && (
-          <p className="text-sm text-ink-2">
-            이번 주 마감 <strong className="text-danger">{summary.closingThisWeek}건</strong> · 7일 안에 시작{" "}
-            <strong>{summary.startingSoon}건</strong>
-          </p>
-        )}
-
-        {/* 결과가 한 건이면 보드와 똑같아지므로 두 건 이상일 때만 보여준다 */}
-        {total > 1 && recommended.length > 0 && (
-          <RecommendedNotices
-            items={recommended}
-            today={today}
-            selectedId={search.selectedNoticeId}
-            onOpen={search.openNotice}
-          />
-        )}
       </div>
 
       <div className="flex min-h-0 flex-1 gap-4">
         <div className="min-w-0 flex-1 md:overflow-y-auto md:pr-1">
+          {understoodNothing && (
+            <section aria-labelledby="picker-title" className="mb-3 flex flex-col gap-3 rounded-lg bg-surface p-4 ring-1 ring-line">
+              <h2 id="picker-title" className="font-bold">
+                직접 골라서 찾기
+              </h2>
+              <ConditionPicker notices={notices} today={today} onApply={search.applyConditions} />
+            </section>
+          )}
+
           {total === 0 ? (
             <div className="flex flex-col gap-2 rounded-lg bg-surface p-4 text-sm ring-1 ring-line">
               <p>지금 접수 중이거나 예정된 공고가 없어요. 조건을 하나 빼고 찾아보세요.</p>
@@ -138,7 +135,7 @@ export default function SearchHome({ notices, dictionary, syncedAt }: SearchHome
                     key={`${chip.kind}-${chip.value}`}
                     type="button"
                     onClick={() => search.removeChip(chip)}
-                    className="min-h-9 rounded-full border border-line-strong px-3 hover:bg-ground"
+                    className="min-h-11 rounded-full border border-line-strong px-3 hover:bg-ground md:min-h-9"
                   >
                     &apos;{chipLabel(chip)}&apos; 빼고 찾기
                   </button>
@@ -146,7 +143,12 @@ export default function SearchHome({ notices, dictionary, syncedAt }: SearchHome
               </div>
             </div>
           ) : (
-            <StatusBoard columns={columns} selectedId={search.selectedNoticeId} onOpen={search.openNotice} />
+            <StatusBoard
+              columns={columns}
+              recommendedIds={recommendedIds}
+              selectedId={search.selectedNoticeId}
+              onOpen={search.openNotice}
+            />
           )}
         </div>
 

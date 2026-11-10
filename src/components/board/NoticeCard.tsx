@@ -7,18 +7,19 @@ import type { BoardCard } from "@/hooks/board/boardColumns";
 
 interface NoticeCardProps {
   card: BoardCard;
+  recommended: boolean; // 조건과 분명히 맞아 먼저 볼 만한 공고
   selected: boolean;
   onOpen: (id: string) => void;
 }
 
-export default function NoticeCard({ card, selected, onOpen }: NoticeCardProps) {
+export default function NoticeCard({ card, recommended, selected, onOpen }: NoticeCardProps) {
   const { match, badge, urgent, progress } = card;
   const { notice, reasons } = match;
   const categoryName = CATEGORIES.find((c) => c.id === notice.categoryId)?.name;
 
   return (
     <article
-      className={`relative rounded-md border bg-surface p-3 text-sm transition-colors hover:border-line-strong has-[button:focus-visible]:ring-2 has-[button:focus-visible]:ring-ink ${
+      className={`relative rounded-md border bg-surface p-2.5 text-sm transition-colors hover:border-line-strong has-[button:focus-visible]:ring-2 has-[button:focus-visible]:ring-ink ${
         selected ? "border-ink ring-2 ring-ink" : "border-line"
       }`}
     >
@@ -27,16 +28,19 @@ export default function NoticeCard({ card, selected, onOpen }: NoticeCardProps) 
           <span aria-hidden="true" className={`cat-dot tone-${colorTokenOf(notice.categoryId)}`} />
           {categoryName}
         </span>
-        <span
-          className={`shrink-0 rounded px-1.5 py-0.5 font-semibold ${
-            urgent ? "bg-danger-tint text-danger" : "bg-ground text-ink-2"
-          }`}
-        >
-          {badge}
+        <span className="flex shrink-0 items-center gap-1">
+          {recommended && <span className="rounded bg-ink px-1.5 py-0.5 font-semibold text-surface">먼저 보기</span>}
+          <span
+            className={`rounded px-1.5 py-0.5 font-semibold ${
+              urgent ? "bg-danger-tint text-danger" : "bg-ground text-ink-2"
+            }`}
+          >
+            {badge}
+          </span>
         </span>
       </div>
 
-      <h4 className="mt-1.5 font-medium leading-snug text-ink">
+      <h4 className="mt-1 font-medium leading-snug text-ink">
         <button
           type="button"
           data-notice-id={notice.id}
@@ -47,9 +51,9 @@ export default function NoticeCard({ card, selected, onOpen }: NoticeCardProps) 
           {notice.title}
         </button>
       </h4>
-      <p className="mt-0.5 text-xs text-muted">{notice.org}</p>
 
-      <p className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted">
+      <p className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-muted">
+        <span>{notice.org}</span>
         {notice.isAlways ? (
           <span className="flex items-center gap-1">
             <AlwaysIcon className="card-icon" />
@@ -83,7 +87,7 @@ export default function NoticeCard({ card, selected, onOpen }: NoticeCardProps) 
           aria-valuemax={progress.total}
           aria-valuenow={progress.day}
           aria-valuetext={`${progress.total}일 중 ${progress.day}일째`}
-          className="mt-2 h-1.5 overflow-hidden rounded-full bg-line"
+          className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-line"
         >
           <div
             className={`h-full rounded-full ${urgent ? "bg-danger" : "bg-ink-2"}`}
@@ -93,9 +97,9 @@ export default function NoticeCard({ card, selected, onOpen }: NoticeCardProps) 
       )}
 
       {reasons.length > 0 && (
-        <ul aria-label="검색 조건과 맞은 부분" className="mt-2 flex flex-wrap gap-1">
+        <ul aria-label="검색 조건과 맞은 부분" className="mt-1.5 flex flex-wrap gap-1">
           {reasons.map((reason) => (
-            <li key={reason} className="rounded border border-line px-1.5 py-0.5 text-[11px] text-ink-2">
+            <li key={reason} className="rounded border border-line px-1.5 text-xs text-ink-2">
               {reason}
             </li>
           ))}

@@ -78,9 +78,3 @@ export function summarizeNotices(notices: NoticeSchedule[], today: IsoDate): Not
   return summary;
 }
 
-// 7일 안에 마감하는 공고를 마감 빠른 순으로 (첫 화면 "이번 주 마감" 카드)
-export function closingThisWeek<T extends NoticeSchedule>(notices: T[], today: IsoDate): T[] {
-  return notices
-    .filter((n) => noticeStatusOf(n, today) === "closing")
-    .sort((a, b) => a.applyEnd!.localeCompare(b.applyEnd!) || a.title.localeCompare(b.title, "ko"));
-}

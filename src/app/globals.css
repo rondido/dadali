@@ -1,6 +1,6 @@
 @import "tailwindcss";
 
-/* 다달이 디자인 토큰 (화면 시안 기준) */
+/* 혜택톡톡 디자인 토큰 (화면 시안 기준) */
 :root {
   --ground: #f6f7f9;
   --surface: #ffffff;
