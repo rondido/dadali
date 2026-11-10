@@ -58,9 +58,9 @@ export default function ConditionPicker({ notices, today, onApply }: ConditionPi
                     type="button"
                     aria-pressed={pressed}
                     onClick={() => setSelected((current) => toggleChip(current, chip))}
-                    className={`min-h-11 rounded-full border px-4 text-sm ${
+                    className={`min-h-11 rounded-md border px-4 text-sm ${
                       pressed
-                        ? "border-ink bg-ink text-surface"
+                        ? "border-primary bg-primary text-on-primary"
                         : "border-line-strong bg-surface text-ink hover:bg-ground"
                     }`}
                   >
@@ -77,7 +77,7 @@ export default function ConditionPicker({ notices, today, onApply }: ConditionPi
         type="button"
         disabled={!ready}
         onClick={() => onApply(selected)}
-        className="min-h-11 self-start rounded-lg bg-ink px-5 font-semibold text-surface hover:bg-ink-2 disabled:cursor-not-allowed disabled:bg-line disabled:text-ink-2"
+        className="min-h-11 self-start rounded-md bg-primary px-5 font-semibold text-on-primary hover:bg-primary-hover disabled:cursor-not-allowed disabled:bg-line disabled:text-ink-2"
       >
         {ready ? `맞을 수 있는 지원사업 ${count}건 보기` : "조건을 하나 이상 골라 주세요"}
       </button>

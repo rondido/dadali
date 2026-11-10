@@ -47,11 +47,11 @@ export default function ConditionBar({
               return (
                 <li
                   key={`${chip.kind}-${chip.value}`}
-                  className={`flex min-h-11 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full pl-3 text-sm md:min-h-9 ${
-                    strong ? "bg-ink text-surface" : "border border-ink bg-surface text-ink"
+                  className={`flex min-h-11 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-md pl-3 text-sm md:min-h-9 ${
+                    strong ? "bg-primary text-on-primary" : "border border-primary bg-surface text-primary"
                   }`}
                 >
-                  <span className={`text-xs ${strong ? "text-line" : "text-muted"}`}>{CHIP_KIND_LABEL[chip.kind]}</span>
+                  <span className={`text-xs ${strong ? "text-primary-tint" : "text-muted"}`}>{CHIP_KIND_LABEL[chip.kind]}</span>
                   {label}
                   <button
                     type="button"
@@ -79,7 +79,7 @@ export default function ConditionBar({
               key={code}
               type="button"
               onClick={() => onAdd({ kind: "region", value: code })}
-              className="min-h-11 rounded-full border border-line-strong bg-surface px-3 hover:bg-ground md:min-h-9"
+              className="min-h-11 rounded-md border border-line-strong bg-surface px-3 hover:bg-ground md:min-h-9"
             >
               {regionLabel(code)}
             </button>

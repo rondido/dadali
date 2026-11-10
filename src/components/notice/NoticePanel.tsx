@@ -26,7 +26,7 @@ function TargetRow({ label, values }: { label: string; values: string[] }) {
       <dt className="w-14 shrink-0 text-muted">{label}</dt>
       <dd className="flex flex-wrap gap-1">
         {values.map((v) => (
-          <span key={v} className="rounded border border-line px-1.5 py-0.5 text-xs text-ink-2">
+          <span key={v} className="rounded-sm border border-line px-1.5 py-0.5 text-xs text-ink-2">
             {v}
           </span>
         ))}
@@ -71,7 +71,7 @@ export default function NoticePanel({ notice, today, syncedAt, onClose }: Notice
 
       <aside
         aria-labelledby="notice-panel-title"
-        className={`fixed inset-x-0 bottom-0 z-40 flex max-h-[85dvh] flex-col rounded-t-2xl bg-surface shadow-xl md:inset-x-auto md:inset-y-4 md:right-4 md:max-h-none md:w-[26rem] md:rounded-lg md:ring-1 md:ring-line xl:static xl:z-auto xl:shrink-0 xl:shadow-none 2xl:w-[34rem] ${
+        className={`fixed inset-x-0 bottom-0 z-40 flex max-h-[85dvh] flex-col rounded-t-lg bg-surface shadow-xl md:inset-x-auto md:inset-y-4 md:right-4 md:max-h-none md:w-[26rem] md:rounded-lg md:ring-1 md:ring-line xl:static xl:z-auto xl:shrink-0 xl:shadow-none 2xl:w-[34rem] ${
           notice ? `tone-${colorTokenOf(notice.categoryId)}` : ""
         }`}
       >
@@ -154,7 +154,7 @@ export default function NoticePanel({ notice, today, syncedAt, onClose }: Notice
               href={link.url}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex min-h-12 items-center justify-center gap-1 rounded-lg bg-ink px-4 font-semibold text-surface hover:bg-ink-2"
+              className="flex min-h-12 items-center justify-center gap-1 rounded-md bg-primary px-4 font-semibold text-on-primary hover:bg-primary-hover"
             >
               {link.isFallback ? `${notice.sourceName}에서 공고 찾기` : "원문 공고 보기"}
               <span aria-hidden="true">↗</span>

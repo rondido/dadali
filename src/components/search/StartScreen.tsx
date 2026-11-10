@@ -36,7 +36,7 @@ export default function StartScreen({ notices, today, onSearch, onShowAll }: Sta
               <button
                 type="button"
                 onClick={() => onSearch(example)}
-                className="min-h-11 rounded-full border border-line-strong bg-surface px-4 text-sm text-ink hover:bg-ground"
+                className="min-h-11 rounded-md border border-line-strong bg-surface px-4 text-sm text-ink hover:bg-ground"
               >
                 {example}
               </button>
