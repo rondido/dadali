@@ -27,7 +27,7 @@ export interface Notice extends NoticeSchedule {
   sourceUrl: string; // 출처 사이트 메인 주소
 }
 
-// 마감일이 오늘보다 앞이면 마감된 공고 (보드에서 빼고 "진행 중" 수에서도 뺀다)
+// 마감일이 오늘보다 앞이면 마감된 공고 (보드에서 빼고 "접수 중" 수에서도 뺀다)
 // "YYYY-MM-DD"는 문자열 비교가 날짜 비교와 같다
 export function isNoticeClosed(notice: Pick<NoticeSchedule, "applyEnd">, today: IsoDate): boolean {
   return notice.applyEnd !== null && notice.applyEnd < today;

@@ -6,7 +6,7 @@ import { formatShortDate } from "@/domain/date/formatShortDate";
 import type { Notice } from "@/domain/notice/notice";
 import type { BoardCard } from "@/hooks/board/boardColumns";
 
-// 대상을 정하지 않아 통과한 공고에 붙는 태그. 조건과 실제로 맞은 태그와 구분해 흐리게 보여준다
+// 대상을 정하지 않아 통과한 공고에 붙는 태그. 조건과 실제로 맞은 부분이 아니므로 카드에 보여주지 않는다
 const PASS_THROUGH_REASONS = new Set(["전국"]);
 
 interface NoticeCardProps {
@@ -16,9 +16,9 @@ interface NoticeCardProps {
   onOpen: (id: string) => void;
 }
 
-// 아이콘 대신 글자로: "10.28 – 11.11", "~ 11.11", "11.12부터", "상시 모집"
+// 아이콘 대신 글자로: "10.28 – 11.11", "~ 11.11", "11.12부터", "상시 접수"
 function periodText(notice: Notice): string {
-  if (notice.isAlways) return "상시 모집";
+  if (notice.isAlways) return "상시 접수";
   const { applyStart: start, applyEnd: end } = notice;
   if (start && end) return `${formatShortDate(start)} – ${formatShortDate(end)}`;
   if (end) return `~ ${formatShortDate(end)}`;
@@ -28,7 +28,8 @@ function periodText(notice: Notice): string {
 
 export default function NoticeCard({ card, recommended, selected, onOpen }: NoticeCardProps) {
   const { match, badge, urgent, progress } = card;
-  const { notice, reasons } = match;
+  const { notice } = match;
+  const reasons = match.reasons.filter((reason) => !PASS_THROUGH_REASONS.has(reason));
   const categoryName = CATEGORIES.find((c) => c.id === notice.categoryId)?.name;
   const period = periodText(notice);
 
@@ -102,12 +103,7 @@ export default function NoticeCard({ card, recommended, selected, onOpen }: Noti
       {reasons.length > 0 && (
         <ul aria-label="검색 조건과 맞은 부분" className="mt-2 flex flex-wrap gap-1">
           {reasons.map((reason) => (
-            <li
-              key={reason}
-              className={`rounded-sm px-1.5 py-0.5 text-xs ${
-                PASS_THROUGH_REASONS.has(reason) ? "bg-ground text-muted" : "bg-primary-tint font-medium text-primary"
-              }`}
-            >
+            <li key={reason} className="rounded-sm bg-primary-tint px-1.5 py-0.5 text-xs font-medium text-primary">
               {reason}
             </li>
           ))}

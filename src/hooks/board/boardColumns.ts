@@ -1,4 +1,4 @@
-// 검색 결과를 진행 예정·진행 중·상시 세 열로 나눈다 (상태 보드 전용, 기획서 5장 상태 정의)
+// 검색 결과를 접수 예정·접수 중·상시 세 열로 나눈다 (상태 보드 전용, 기획서 5장 상태 정의)
 // 마감된 공고는 보드에 넣지 않는다
 import type { IsoDate, NoticeSchedule } from "@/domain/notice/notice";
 import {
@@ -20,7 +20,7 @@ export interface BoardCard {
   status: NoticeStatus;
   badge: string; // "3일 후 시작", "D-4", "오늘 마감", "상시"
   urgent: boolean; // 마감 7일 이내 → 빨간색
-  progress: PeriodProgress | null; // 진행 중 카드의 기간 막대
+  progress: PeriodProgress | null; // 접수 중 카드의 기간 막대
 }
 
 export interface BoardColumn {
@@ -37,8 +37,8 @@ const byEnd: Compare = (a, b) => (a.applyEnd ?? "9999").localeCompare(b.applyEnd
 
 // 열 순서, 각 열에 들어가는 접수 상태, 열 안의 정렬 기준
 const COLUMNS: { key: BoardColumnKey; title: string; statuses: NoticeStatus[]; compare: Compare }[] = [
-  { key: "upcoming", title: "진행 예정", statuses: ["upcoming"], compare: byStart },
-  { key: "ongoing", title: "진행 중", statuses: ["open", "closing"], compare: byEnd },
+  { key: "upcoming", title: "접수 예정", statuses: ["upcoming"], compare: byStart },
+  { key: "ongoing", title: "접수 중", statuses: ["open", "closing"], compare: byEnd },
   { key: "always", title: "상시", statuses: ["always"], compare: byTitle },
 ];
 

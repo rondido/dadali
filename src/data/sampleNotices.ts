@@ -39,7 +39,7 @@ function sample({ source, ...input }: SampleInput): Notice {
 export const SAMPLE_SYNCED_AT = "2026-11-10T05:00:00+09:00";
 
 export const SAMPLE_NOTICES: Notice[] = [
-  // 진행 중 (마감 7일 안: 빨간 D-day)
+  // 접수 중 (마감 7일 안: 빨간 D-day)
   sample({
     id: "s25", title: "샘플 서울 소상공인 점포 환경개선 지원", categoryId: "C03", org: "서울신용보증재단", source: "sbiz24",
     applyStart: "2026-10-28", applyEnd: "2026-11-11",
@@ -99,7 +99,7 @@ export const SAMPLE_NOTICES: Notice[] = [
     summary: "청년 창업자 사무 공간과 장비 무상 제공", ageGroups: ["youth"], regionCodes: ["26"], topics: ["startup", "facility"],
   }),
 
-  // 진행 예정
+  // 접수 예정
   sample({
     id: "s05", title: "샘플 공공 용역 입찰", categoryId: "C04", org: "조달청", source: "g2b",
     applyStart: "2026-11-20", applyEnd: "2026-12-04",
@@ -120,7 +120,7 @@ export const SAMPLE_NOTICES: Notice[] = [
     applyStart: "2026-10-12", applyEnd: "2026-10-30", industries: ["mfg"], topics: ["digital"],
   }),
 
-  // 상시 모집
+  // 상시 접수
   sample({
     id: "s10", title: "샘플 상시 정책자금", categoryId: "C03", org: "소상공인시장진흥공단", source: "sbiz24",
     applyStart: null, applyEnd: null, isAlways: true,

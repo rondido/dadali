@@ -1,0 +1,38 @@
+# 공고 수집 (기획서 13장): 매일 새벽 5시, 1~3월 성수기에는 오후 5시에 한 번 더
+# 필요한 GitHub Secrets: DATABASE_URL(Supabase Session pooler 주소), DATA_GO_KR_KEY(공공데이터포털 인증키)
+# 실패하면 GitHub가 저장소 관리자에게 메일로 알린다 (Actions 실패 알림)
+name: 공고 수집
+
+on:
+  schedule:
+    - cron: "0 20 * * *" # 매일 05:00 (한국 시간, UTC+9)
+    - cron: "0 8 * 1-3 *" # 1~3월 17:00 (한국 시간)
+  workflow_dispatch: # Actions 화면에서 직접 실행
+
+permissions:
+  contents: read
+
+concurrency:
+  group: collect
+  cancel-in-progress: false
+
+jobs:
+  collect:
+    name: K-Startup · 행안부 혜택 수집
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: 수집
+        run: npm run collect
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          DATA_GO_KR_KEY: ${{ secrets.DATA_GO_KR_KEY }}

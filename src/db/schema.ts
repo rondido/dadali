@@ -67,7 +67,7 @@ export const notice = pgTable(
     categoryId: text("category_id").notNull().references(() => category.id),
     applyStart: date("apply_start"), // 접수 시작일
     applyEnd: date("apply_end"), // 접수 마감일
-    isAlways: boolean("is_always").notNull().default(false), // 상시 모집
+    isAlways: boolean("is_always").notNull().default(false), // 상시 접수
     detailUrl: text("detail_url").notNull(), // 원문 공고 주소
 
     // 검색용 (5-1장 자유 입력 검색)

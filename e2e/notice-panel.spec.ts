@@ -26,7 +26,7 @@ test.describe("카드를 누르면", () => {
     await openCard(page, SEOUL);
 
     await expect(panel(page).getByRole("heading", { name: SEOUL })).toBeVisible();
-    await expect(page.getByRole("region", { name: "진행 중", exact: true })).toBeVisible();
+    await expect(page.getByRole("region", { name: "접수 중", exact: true })).toBeVisible();
     await expect(page).toHaveURL(/notice=s25/);
   });
 
@@ -68,7 +68,7 @@ test.describe("카드를 누르면", () => {
 test.describe("원문 공고로 이동", () => {
   test("원문 주소가 있으면 새 탭으로 원문 공고를 열고 공식 도메인을 보여줍니다", async ({ page }) => {
     await openCard(page, STARTUP);
-    const link = panel(page).getByRole("link", { name: /원문 공고 보기/ });
+    const link = panel(page).getByRole("link", { name: /공식 사이트에서 보기/ });
 
     await expect(link).toHaveAttribute("href", "https://www.k-startup.go.kr/web/contents/bizpbanc-ongoing.do");
     await expect(link).toHaveAttribute("target", "_blank");
@@ -77,17 +77,17 @@ test.describe("원문 공고로 이동", () => {
 
   test("원문 주소가 없으면 출처 사이트 첫 화면으로 보낸다고 알려 줍니다", async ({ page }) => {
     await openCard(page, SEOUL);
-    const link = panel(page).getByRole("link", { name: /소상공인24에서 공고 찾기/ });
+    const link = panel(page).getByRole("link", { name: /소상공인24에서 찾아보기/ });
 
     await expect(link).toHaveAttribute("href", "https://www.sbiz24.kr");
-    await expect(panel(page)).toContainText("원문 주소가 없어 사이트 첫 화면으로 이동해요");
+    await expect(panel(page)).toContainText("sbiz24.kr");
   });
 });
 
-test("상시 공고는 달력 대신 상시 모집으로 보여줍니다", async ({ page }) => {
+test("상시 공고는 달력 대신 상시 접수으로 보여줍니다", async ({ page }) => {
   await openCard(page, "샘플 상시 정책자금");
 
-  await expect(panel(page)).toContainText("상시 모집");
+  await expect(panel(page)).toContainText("상시 접수");
   await expect(panel(page).getByRole("figure")).toHaveCount(0);
 });
 
@@ -116,7 +116,7 @@ test.describe("패널 닫기", () => {
     await page.goBack();
 
     await expect(panel(page)).toHaveCount(0);
-    await expect(page.getByRole("region", { name: "진행 중", exact: true })).toBeVisible();
+    await expect(page.getByRole("region", { name: "접수 중", exact: true })).toBeVisible();
   });
 
   test("공고가 담긴 주소로 바로 들어오면 패널이 열린 채로 보입니다", async ({ page }) => {
@@ -147,7 +147,7 @@ test.describe("모바일", () => {
 
     const box = (await panel(page).boundingBox())!;
     expect(box.y + box.height).toBeCloseTo(844, 0);
-    await expect(panel(page).getByRole("link", { name: /공고 찾기|원문 공고 보기/ })).toBeInViewport();
+    await expect(panel(page).getByRole("link", { name: /찾아보기|공식 사이트에서 보기/ })).toBeInViewport();
   });
 
   test("뒤 화면을 누르면 시트가 닫힙니다", async ({ page }) => {

@@ -68,7 +68,7 @@ describe("recommendNotices", () => {
       expect(idsOf(notices)).toEqual(["sooner", "later"]);
     });
 
-    it("접수 중 → 진행 예정 → 상시 순서로 보여줍니다", () => {
+    it("접수 중 → 접수 예정 → 상시 순서로 보여줍니다", () => {
       const notices = [
         noticeOf({ id: "always", regionCodes: ["11"], applyStart: null, applyEnd: null, isAlways: true }),
         noticeOf({ id: "upcoming", regionCodes: ["11"], applyStart: "2026-11-11", applyEnd: "2026-11-12" }),
@@ -78,7 +78,7 @@ describe("recommendNotices", () => {
       expect(idsOf(notices)).toEqual(["open", "upcoming", "always"]);
     });
 
-    it("진행 예정 공고는 시작이 가까운 순서로 보여줍니다", () => {
+    it("접수 예정 공고는 시작이 가까운 순서로 보여줍니다", () => {
       const notices = [
         noticeOf({ id: "later", regionCodes: ["11"], applyStart: "2026-11-20", applyEnd: "2026-12-01" }),
         noticeOf({ id: "sooner", regionCodes: ["11"], applyStart: "2026-11-12", applyEnd: "2026-12-31" }),

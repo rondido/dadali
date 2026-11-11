@@ -97,7 +97,7 @@ async function explore(src: (typeof SOURCES)[number], outDir: string) {
     const file = join(outDir, `${src.name}-${stamp}.txt`);
     writeFileSync(file, body);
     console.log("  JSON이 아닌 응답이에요 (보통 인증키 오류). 앞부분:");
-    console.log("  " + body.slice(0, 400).replace(/\s+/g, " "));
+    console.log("  " + body.slice(0, 400).replace(/\s+/g, " ").replace(/serviceKey=[^&\s"<]*/g, "serviceKey=***"));
     console.log(`  저장: ${file}`);
     return;
   }
@@ -126,7 +126,10 @@ async function main() {
     try {
       await explore(src, outDir);
     } catch (err) {
-      console.log(`  호출 실패: ${(err as Error).message}`);
+      // 오류 메시지에 인증키가 담긴 주소가 섞여 나올 수 있어 키 부분을 가린다
+      const message = (err as Error).message.replace(/serviceKey=[^&\s]*/g, "serviceKey=***");
+      console.log(`  호출 실패: ${message}`);
+      if (!/^https?:\/\//.test(src.url)) console.log("  주소가 https://로 시작하지 않아요. .env.local의 주소를 확인하세요.");
     }
   }
   console.log("\n끝. data/raw 폴더의 원본 파일을 공유해 주시면 변환 규칙을 같이 정할 수 있어요.");

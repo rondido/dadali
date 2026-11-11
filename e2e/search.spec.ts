@@ -26,14 +26,14 @@ test.beforeEach(async ({ page }) => {
 test.describe("입력 전 첫 화면", () => {
   test("입력창과 저장하지 않는다는 고지, 예시 문장 4개를 보여줍니다", async ({ page }) => {
     await expect(page.getByRole("searchbox", { name: "내 상황" })).toBeVisible();
-    await expect(page.getByText("입력한 문장은 조건을 찾는 데만 쓰고 저장하지 않아요.")).toBeVisible();
+    await expect(page.getByText("입력한 내용은 저장하지 않아요.")).toBeVisible();
     await expect(page.getByRole("list", { name: "예시 문장" }).getByRole("button")).toHaveCount(4);
     await expect(page.getByRole("button", { name: EXAMPLE })).toBeVisible();
     await expect(page.getByRole("button", { name: "창업 지원금" })).toBeVisible();
   });
 
   test("검색창에 집중하도록 공고 카드 없이 건수 한 줄과 전체 보기 링크만 보여줍니다", async ({ page }) => {
-    await expect(page.getByText(/지금 진행 중 11건 · 이번 주 마감\s*2건/)).toBeVisible();
+    await expect(page.getByText(/접수 중 11건 · 이번 주 마감\s*2건/)).toBeVisible();
     await expect(page.getByRole("button", { name: "전체 지원사업 보기" })).toBeVisible();
     await expect(page.getByRole("article")).toHaveCount(0);
   });
@@ -61,7 +61,7 @@ test.describe("대표 시나리오 검색", () => {
   });
 
   test("문장에서 찾은 조건을 칩으로 보여주고 주소에 조건만 담습니다", async ({ page }) => {
-    await expect(chips(page)).toHaveText([/지역\s*서울/, /나이대\s*청년/, /하는 일\s*도소매·음식/, /관심\s*시설·인테리어/]);
+    await expect(chips(page)).toHaveText([/지역\s*서울/, /나이대\s*청년/, /하는 일\s*도소매·음식/, /주제\s*시설·인테리어/]);
     await expect(page).toHaveURL(/\?region=11&age=youth&biz=retail&topic=facility$/);
   });
 
@@ -71,6 +71,14 @@ test.describe("대표 시나리오 검색", () => {
     const card = page.getByRole("article").filter({ hasText: "샘플 서울 소상공인 점포 환경개선 지원" });
     await expect(card).toContainText("D-1");
     await expect(card.getByRole("list", { name: "검색 조건과 맞은 부분" })).toHaveText(/서울.*시설·인테리어/);
+  });
+
+  test("대상을 정하지 않아 통과한 공고에는 전국 태그를 붙이지 않고 맞은 조건만 보여줍니다", async ({ page }) => {
+    const card = page.getByRole("article").filter({ hasText: "샘플 스마트상점 기술 보급" });
+    const tags = card.getByRole("list", { name: "검색 조건과 맞은 부분" });
+
+    await expect(tags).toContainText("도소매·음식");
+    await expect(tags).not.toContainText("전국");
   });
 
   test("칩의 ×를 누르면 그 조건을 빼고 바로 다시 거릅니다", async ({ page }) => {
@@ -88,18 +96,32 @@ test.describe("대표 시나리오 검색", () => {
     await expect(chips(page)).toHaveCount(4);
   });
 
-  test("처음부터 새로 찾으면 저장된 조건을 지우고 첫 화면으로 돌아갑니다", async ({ page }) => {
-    await page.getByRole("button", { name: "처음부터 새로 찾기" }).click();
-    await page.goto("/");
+  test("혜택톡톡을 누르면 저장된 조건을 지우고 첫 화면으로 돌아갑니다", async ({ page }) => {
+    await page.getByRole("link", { name: "혜택톡톡 첫 화면으로" }).click();
 
+    await expect(page).toHaveURL(/\/$/);
+    await expect(page.getByRole("button", { name: "지원사업 찾기" })).toBeVisible();
+
+    // 다시 들어와도 저장된 조건으로 보드가 열리지 않습니다
+    await page.goto("/");
     await expect(page.getByRole("button", { name: "지원사업 찾기" })).toBeVisible();
   });
+
+});
+
+test("전체 지원사업 보기에서 혜택톡톡을 누르면 첫 화면으로 돌아갑니다", async ({ page }) => {
+  await page.getByRole("button", { name: "전체 지원사업 보기" }).click();
+  await expect(resultTitle(page)).toContainText("전체 지원사업");
+
+  await page.getByRole("link", { name: "혜택톡톡 첫 화면으로" }).click();
+
+  await expect(page.getByRole("button", { name: "지원사업 찾기" })).toBeVisible();
 });
 
 test("예시 문장을 누르면 바로 검색합니다", async ({ page }) => {
   await page.getByRole("button", { name: "창업 지원금" }).click();
 
-  await expect(chips(page)).toHaveText([/관심\s*창업/]);
+  await expect(chips(page)).toHaveText([/주제\s*창업/]);
 });
 
 test("뜻이 둘인 지명은 다른 후보를 골라 바꿀 수 있습니다", async ({ page }) => {
@@ -123,13 +145,13 @@ test.describe("조건으로 바꾸지 못한 단어", () => {
   test("공고명이나 지원 내용에 있으면 그 단어로 찾아 줍니다", async ({ page }) => {
     await searchFor(page, "복직 준비");
 
-    await expect(page.getByText("'복직'는 공고명과 지원 내용에서 찾았어요.")).toBeVisible();
+    await expect(page.getByText("'복직'이 들어간 지원사업만 보여 드려요.")).toBeVisible();
     await expect(resultTitle(page)).toHaveText("조건에 맞을 수 있는 지원사업 1건");
   });
 
   test("어디에도 없으면 이해하지 못했다고 알려 줍니다", async ({ page }) => {
     await searchFor(page, "고양이 카페");
 
-    await expect(page.getByText(/'고양이'는 이해하지 못했어요/)).toBeVisible();
+    await expect(page.getByText(/'고양이'는 알아듣지 못했어요/)).toBeVisible();
   });
 });

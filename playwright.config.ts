@@ -24,7 +24,8 @@ export default defineConfig({
   // 테스트 전에 e2e 전용 개발 서버를 띄운다. 이미 떠 있으면 그 서버를 쓴다 (CI 제외)
   webServer: {
     command: `npx next dev --port ${PORT}`,
-    env: { NEXT_DIST_DIR: E2E_DIST_DIR },
+    // e2e는 샘플 공고(src/data/sampleNotices.ts)를 기준으로 검증하므로 DB 대신 샘플을 쓴다
+    env: { NEXT_DIST_DIR: E2E_DIST_DIR, USE_SAMPLE_DATA: "1" },
     url: BASE_URL,
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,

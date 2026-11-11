@@ -1,12 +1,13 @@
 "use client";
 
 // "이렇게 이해했어요" 해석 칩 줄 (기획서 F03, 5-1장 칩 규칙)
-// 지역·나이대·하는 일은 진한 칩, 관심 주제는 테두리 칩. ×를 누르면 그 자리에서 다시 거른다
+// 지역·나이대·하는 일은 진한 칩, 관심 주제는 테두리 칩으로 모양만으로 구분한다 (종류 이름은 화면 낭독기에만). ×를 누르면 그 자리에서 다시 거른다
 // PC는 칩과 건수를 한 줄에, 모바일은 칩을 가로 스크롤 한 줄로 두어 보드 자리를 넓힌다
 import type { ReactNode } from "react";
 import AddCondition from "@/components/search/AddCondition";
 import { regionLabel, type RegionCode } from "@/domain/search/conditionValues";
 import { CHIP_KIND_LABEL, chipLabel, toChips, type ConditionChip, type SearchConditions } from "@/domain/search/conditions";
+import { josa } from "@/domain/text/josa";
 
 interface ConditionBarProps {
   conditions: SearchConditions;
@@ -19,6 +20,8 @@ interface ConditionBarProps {
 }
 
 const quote = (words: string[]) => words.map((w) => `'${w}'`).join(", ");
+// 여러 단어면 마지막 단어의 받침으로 조사를 고른다 ('복직'이, '고양이'가)
+const lastWord = (words: string[]) => words[words.length - 1] ?? "";
 
 export default function ConditionBar({
   conditions,
@@ -35,7 +38,7 @@ export default function ConditionBar({
   return (
     <div className="flex flex-col gap-2">
       <div className="flex flex-wrap items-center gap-2">
-        <span className="sr-only text-sm font-semibold text-ink md:not-sr-only">이렇게 이해했어요</span>
+        <span className="sr-only">이렇게 이해했어요</span>
         {chips.length > 0 && (
           <ul
             aria-label="검색 조건"
@@ -51,7 +54,7 @@ export default function ConditionBar({
                     strong ? "bg-primary text-on-primary" : "border border-primary bg-surface text-primary"
                   }`}
                 >
-                  <span className={`text-xs ${strong ? "text-primary-tint" : "text-muted"}`}>{CHIP_KIND_LABEL[chip.kind]}</span>
+                  <span className="sr-only">{CHIP_KIND_LABEL[chip.kind]}</span>
                   {label}
                   <button
                     type="button"
@@ -66,14 +69,13 @@ export default function ConditionBar({
             })}
           </ul>
         )}
-        {chips.length === 0 && <span className="text-sm text-muted">조건 없이 전체 공고를 보여드려요</span>}
         <AddCondition onAdd={onAdd} />
         {trailing}
       </div>
 
       {regionChoices.length > 0 && (
         <div className="flex flex-wrap items-center gap-2 text-sm text-ink-2">
-          <span>다른 지역을 말씀하셨나요?</span>
+          <span>혹시 이 지역인가요?</span>
           {regionChoices.map((code) => (
             <button
               key={code}
@@ -88,11 +90,15 @@ export default function ConditionBar({
       )}
 
       {usedKeywords.length > 0 && (
-        <p className="text-sm text-ink-2">{quote(usedKeywords)}는 공고명과 지원 내용에서 찾았어요.</p>
+        <p className="text-sm text-ink-2">
+          {quote(usedKeywords)}
+          {josa(lastWord(usedKeywords), "이", "가")} 들어간 지원사업만 보여 드려요.
+        </p>
       )}
       {notUnderstood.length > 0 && (
         <p className="text-sm text-ink-2">
-          {quote(notUnderstood)}는 이해하지 못했어요. &quot;+ 조건 추가&quot;로 직접 골라 보세요.
+          {quote(notUnderstood)}
+          {josa(lastWord(notUnderstood), "은", "는")} 알아듣지 못했어요.
         </p>
       )}
     </div>
