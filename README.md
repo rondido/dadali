@@ -34,13 +34,16 @@ npm run explore
 ## 2단계: DB 만들기
 
 1. Supabase 프로젝트를 만들고 Connect > Connection String에서 Session pooler 주소를 복사해 `.env.local`의 `DATABASE_URL`에 넣습니다. 비밀번호는 대괄호 없이 넣고, 특수문자는 URL 인코딩합니다(예: `@` → `%40`).
-2. 테이블을 만듭니다.
+2. Supabase > SQL Editor에서 `supabase/extensions.sql`을 실행합니다. 검색 색인에 쓰는 pg_trgm 확장이 설치됩니다.
+3. 테이블을 만듭니다.
 
 ```bash
 npm run db:push
 ```
 
-3. Supabase > SQL Editor에서 `supabase/rls.sql`을 실행합니다. 읽기 전용 정책과 분류 기본값이 들어갑니다.
+4. SQL Editor에서 `supabase/rls.sql`, `supabase/seed.sql`을 차례로 실행합니다. 읽기 전용 보안 정책과 기본 데이터(분류 4개, 수록 사이트 10곳)가 들어갑니다. 두 파일 모두 여러 번 실행해도 됩니다.
+
+주의: `npm run db:push`는 이미 있는 검사 규칙(CHECK)의 내용이 바뀐 것을 반영하지 못합니다. 규칙을 고쳤다면 `drizzle/`에 생성된 SQL을 보고 SQL Editor에서 직접 다시 만듭니다.
 
 ## 폴더 구조
 
