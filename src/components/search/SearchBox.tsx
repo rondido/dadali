@@ -52,7 +52,7 @@ export default function SearchBox({ size, onSearch }: SearchBoxProps) {
         type="search"
         value={text}
         onChange={(e) => setText(e.target.value)}
-        placeholder={large ? "예: 서울에서 카페 하는 32살인데 가게 인테리어 지원 있나요?" : "다른 상황으로 다시 찾기"}
+        placeholder={large ? "지역, 나이, 하는 일을 적어 주세요" : "다른 상황으로 다시 찾기"}
         autoComplete="off"
         // 브라우저 기본 지우기 버튼은 숨기고 아래의 버튼으로 통일한다
         className={`min-w-0 flex-1 bg-transparent text-ink placeholder:text-muted focus:outline-none [&::-webkit-search-cancel-button]:appearance-none ${

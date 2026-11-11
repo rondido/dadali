@@ -32,7 +32,7 @@ test.describe("문장에서 조건을 하나도 찾지 못했을 때", () => {
   });
 
   test("직접 골라서 찾는 선택지를 펼치고, 고르기 전에는 찾기 버튼을 누를 수 없습니다", async ({ page }) => {
-    await expect(picker(page).getByRole("button", { name: "조건을 하나 이상 골라 주세요" })).toBeDisabled();
+    await expect(picker(page).getByRole("button", { name: "지원사업 보기", exact: true })).toBeDisabled();
   });
 
   test("조건을 고르면 눌림 표시와 함께 맞을 수 있는 건수를 보여줍니다", async ({ page }) => {
@@ -42,7 +42,7 @@ test.describe("문장에서 조건을 하나도 찾지 못했을 때", () => {
       "aria-pressed",
       "true",
     );
-    await expect(picker(page).getByRole("button", { name: "맞을 수 있는 지원사업 15건 보기" })).toBeEnabled();
+    await expect(picker(page).getByRole("button", { name: "지원사업 15건 보기" })).toBeEnabled();
   });
 
   test("지역은 하나만 고를 수 있어 다른 지역을 누르면 바뀝니다", async ({ page }) => {
@@ -108,7 +108,7 @@ test.describe("보드 공간", () => {
   test("PC에서는 검색·칩·건수를 줄여 보드가 화면의 위쪽 3분의 1 안에서 시작합니다", async ({ page }) => {
     await page.goto("/?region=11&biz=retail");
 
-    const board = (await page.getByRole("region", { name: "진행 중", exact: true }).boundingBox())!;
+    const board = (await page.getByRole("region", { name: "접수 중", exact: true }).boundingBox())!;
     expect(board.y).toBeLessThan(page.viewportSize()!.height / 3);
   });
 
@@ -128,7 +128,7 @@ test.describe("보드 공간", () => {
 
     test("패널을 보드 위에 겹쳐 열어 보드 열이 좁아지지 않습니다", async ({ page }) => {
       await page.goto("/?all=1");
-      const column = page.getByRole("region", { name: "진행 중", exact: true });
+      const column = page.getByRole("region", { name: "접수 중", exact: true });
       const before = (await column.boundingBox())!.width;
 
       await page.goto("/?all=1&notice=s25");

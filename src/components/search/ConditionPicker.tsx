@@ -16,13 +16,6 @@ import {
 } from "@/domain/search/conditions";
 import { matchNotices } from "@/domain/search/matchNotices";
 
-// 자격 판단을 대신하지 않도록 기준이 사업마다 다른 항목에 안내를 붙인다 (기획서 7-1장)
-const FIELD_HINTS: Partial<Record<ConditionChip["kind"], string>> = {
-  age: "기준은 사업마다 달라요",
-  biz: "사업을 하고 있다면 골라 주세요",
-  topic: "여러 개 고를 수 있어요",
-};
-
 interface ConditionPickerProps {
   notices: Notice[];
   today: IsoDate;
@@ -41,12 +34,7 @@ export default function ConditionPicker({ notices, today, onApply }: ConditionPi
     <div className="flex flex-col gap-4">
       {CONDITION_FIELDS.map((field) => (
         <fieldset key={field.kind} className="flex flex-col gap-2">
-          <legend className="text-sm font-medium text-ink-2">
-            {field.label}
-            {FIELD_HINTS[field.kind] && (
-              <span className="ml-2 text-xs font-normal text-muted">{FIELD_HINTS[field.kind]}</span>
-            )}
-          </legend>
+          <legend className="text-sm font-medium text-ink-2">{field.label}</legend>
           <ul className="flex flex-wrap gap-2">
             {field.options.map((option) => {
               // 값은 CONDITION_FIELDS의 options 중 하나이므로 그 종류의 칩이 된다
@@ -79,7 +67,7 @@ export default function ConditionPicker({ notices, today, onApply }: ConditionPi
         onClick={() => onApply(selected)}
         className="min-h-11 self-start rounded-md bg-primary px-5 font-semibold text-on-primary hover:bg-primary-hover disabled:cursor-not-allowed disabled:bg-line disabled:text-ink-2"
       >
-        {ready ? `맞을 수 있는 지원사업 ${count}건 보기` : "조건을 하나 이상 골라 주세요"}
+        {ready ? `지원사업 ${count.toLocaleString()}건 보기` : "지원사업 보기"}
       </button>
     </div>
   );

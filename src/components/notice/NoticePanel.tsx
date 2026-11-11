@@ -15,7 +15,7 @@ import { targetsOf } from "@/domain/notice/noticeTargets";
 interface NoticePanelProps {
   notice: Notice | null; // URL의 공고를 찾지 못하면 null
   today: IsoDate;
-  syncedAt: string; // 데이터 최종 갱신 시각 (ISO)
+  syncedAt: string | null; // 데이터 최종 갱신 시각 (ISO). 수집 기록이 없으면 null
   onClose: () => void;
 }
 
@@ -99,7 +99,7 @@ export default function NoticePanel({ notice, today, syncedAt, onClose }: Notice
 
           {!notice || !badge || !targets ? (
             <h2 id="notice-panel-title" ref={headingRef} tabIndex={-1} className="text-lg font-bold outline-none">
-              공고를 찾을 수 없어요
+              지원사업을 찾을 수 없어요
             </h2>
           ) : (
             <>
@@ -112,7 +112,7 @@ export default function NoticePanel({ notice, today, syncedAt, onClose }: Notice
 
               <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
                 <strong className={`text-3xl font-extrabold ${badge.urgent ? "text-danger" : "text-ink"}`}>
-                  {notice.isAlways ? "상시 모집" : badge.label}
+                  {notice.isAlways ? "상시 접수" : badge.label}
                 </strong>
                 {progress && (
                   <span className="text-sm text-ink-2">
@@ -139,9 +139,9 @@ export default function NoticePanel({ notice, today, syncedAt, onClose }: Notice
                 <TargetRow label="주제" values={targets.topics} />
               </dl>
 
-              <p className="text-sm text-ink-2">세부 자격과 나이 기준은 원문 공고에서 확인하세요.</p>
+              <p className="text-sm text-ink-2">자격 조건은 공식 사이트에서 꼭 확인하세요.</p>
               <p className="text-xs text-muted">
-                출처 {notice.sourceName} · 최종 갱신 {formatSeoulDateTime(new Date(syncedAt))}
+                출처 {notice.sourceName} · 최종 갱신 {syncedAt ? formatSeoulDateTime(new Date(syncedAt)) : "기록 없음"}
               </p>
             </>
           )}
@@ -156,13 +156,12 @@ export default function NoticePanel({ notice, today, syncedAt, onClose }: Notice
               rel="noopener noreferrer"
               className="flex min-h-12 items-center justify-center gap-1 rounded-md bg-primary px-4 font-semibold text-on-primary hover:bg-primary-hover"
             >
-              {link.isFallback ? `${notice.sourceName}에서 공고 찾기` : "원문 공고 보기"}
+              {link.isFallback ? `${notice.sourceName}에서 찾아보기` : "공식 사이트에서 보기"}
               <span aria-hidden="true">↗</span>
               <span className="sr-only">(새 탭)</span>
             </a>
             <p className="mt-1.5 text-center text-xs text-muted">
               {link.host}
-              {link.isFallback && " · 원문 주소가 없어 사이트 첫 화면으로 이동해요"}
             </p>
           </div>
         )}

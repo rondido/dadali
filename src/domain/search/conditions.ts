@@ -46,7 +46,7 @@ export const CHIP_KIND_LABEL: Record<ConditionChip["kind"], string> = {
   region: "지역",
   age: "나이대",
   biz: "하는 일",
-  topic: "관심",
+  topic: "주제",
 };
 
 export function chipLabel(chip: ConditionChip): string {

@@ -8,6 +8,8 @@ describe("isOfficialUrl", () => {
     ["https://www.semas.or.kr", true],
     ["https://www.sbiz24.kr", true],
     ["https://sbiz24.kr", true],
+    ["https://www.gov.kr/portal/rcvfvrSvc/main", true],
+    ["https://fakegov.kr", false],
     ["https://k-startup.go.kr.example.com", false],
     ["https://fake-sbiz24.kr", false],
     ["javascript:alert(1)", false],

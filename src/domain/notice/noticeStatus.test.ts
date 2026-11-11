@@ -25,7 +25,7 @@ function scheduleOf(overrides: Partial<NoticeSchedule>): NoticeSchedule {
 const TODAY = "2026-11-10";
 
 describe("noticeStatusOf", () => {
-  it("상시 모집 공고는 날짜와 상관없이 always를 반환합니다", () => {
+  it("상시 접수 공고는 날짜와 상관없이 always를 반환합니다", () => {
     const notice = scheduleOf({ applyEnd: "2026-11-01", isAlways: true });
 
     expect(noticeStatusOf(notice, TODAY)).toBe("always");
@@ -102,7 +102,7 @@ describe("periodProgressOf", () => {
 });
 
 describe("summarizeNotices", () => {
-  it("진행 중, 7일 안 마감, 7일 안 시작 공고 수를 셉니다", () => {
+  it("접수 중, 7일 안 마감, 7일 안 시작 공고 수를 셉니다", () => {
     const notices = [
       scheduleOf({ applyStart: "2026-11-01", applyEnd: "2026-11-30" }),
       scheduleOf({ applyStart: "2026-11-01", applyEnd: "2026-11-14" }),

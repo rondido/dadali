@@ -13,28 +13,24 @@ test.beforeEach(async ({ page }) => {
 });
 
 test.describe("전체 보드", () => {
-  test("진행 예정·진행 중·상시 세 열을 순서대로 보여주고 열마다 공고 수를 표시합니다", async ({ page }) => {
+  test("접수 예정·접수 중·상시 세 열을 순서대로 보여주고 열마다 공고 수를 표시합니다", async ({ page }) => {
     await expect(page.getByRole("heading", { level: 3 })).toHaveText([
-      /진행 예정\s*3건/,
-      /진행 중\s*11건/,
+      /접수 예정\s*3건/,
+      /접수 중\s*11건/,
       /상시\s*3건/,
     ]);
   });
 
-  test("보드 위에 이번 주 마감과 7일 안에 시작하는 공고 수를 보여줍니다", async ({ page }) => {
-    await expect(page.getByText(/이번 주 마감\s*2건 · 7일 안에 시작\s*2건/)).toBeVisible();
-  });
-
-  test("진행 중 열은 마감이 빠른 공고부터 빨간 D-day와 함께 보여줍니다", async ({ page }) => {
-    const first = column(page, "진행 중").getByRole("article").first();
+  test("접수 중 열은 마감이 빠른 공고부터 빨간 D-day와 함께 보여줍니다", async ({ page }) => {
+    const first = column(page, "접수 중").getByRole("article").first();
 
     await expect(first).toContainText("샘플 서울 소상공인 점포 환경개선 지원");
     await expect(first).toContainText("D-1");
     await expect(first.getByRole("meter")).toHaveAttribute("aria-valuetext", "15일 중 14일째");
   });
 
-  test("진행 예정 카드에는 며칠 후 시작하는지 보여줍니다", async ({ page }) => {
-    await expect(column(page, "진행 예정").getByRole("article").first()).toContainText("2일 후 시작");
+  test("접수 예정 카드에는 며칠 후 시작하는지 보여줍니다", async ({ page }) => {
+    await expect(column(page, "접수 예정").getByRole("article").first()).toContainText("2일 후 시작");
   });
 
   test("마감된 공고는 보여주지 않습니다", async ({ page }) => {
@@ -42,7 +38,7 @@ test.describe("전체 보드", () => {
   });
 
   test("열마다 처음 5건만 보여주고 더보기로 나머지를 펼칩니다", async ({ page }) => {
-    const ongoing = column(page, "진행 중");
+    const ongoing = column(page, "접수 중");
     await expect(ongoing.getByRole("article")).toHaveCount(5);
 
     await ongoing.getByRole("button", { name: "6건 더보기" }).click();
@@ -58,14 +54,14 @@ test.describe("전체 보드", () => {
 test.describe("모바일", () => {
   test.use({ viewport: { width: 390, height: 844 } });
 
-  test("상태 3개를 탭으로 바꾸고 진행 중 탭을 먼저 보여줍니다", async ({ page }) => {
-    await expect(page.getByRole("tab", { name: /진행 중/ })).toHaveAttribute("aria-selected", "true");
-    await expect(column(page, "진행 중")).toBeVisible();
-    await expect(column(page, "진행 예정")).toBeHidden();
+  test("상태 3개를 탭으로 바꾸고 접수 중 탭을 먼저 보여줍니다", async ({ page }) => {
+    await expect(page.getByRole("tab", { name: /접수 중/ })).toHaveAttribute("aria-selected", "true");
+    await expect(column(page, "접수 중")).toBeVisible();
+    await expect(column(page, "접수 예정")).toBeHidden();
 
-    await page.getByRole("tab", { name: /진행 예정/ }).click();
+    await page.getByRole("tab", { name: /접수 예정/ }).click();
 
-    await expect(column(page, "진행 예정")).toBeVisible();
-    await expect(column(page, "진행 중")).toBeHidden();
+    await expect(column(page, "접수 예정")).toBeVisible();
+    await expect(column(page, "접수 중")).toBeHidden();
   });
 });

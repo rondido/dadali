@@ -27,7 +27,7 @@ export default function StartScreen({ notices, today, onSearch, onShowAll }: Sta
 
         <div className="flex w-full flex-col gap-2">
           <SearchBox size="large" onSearch={onSearch} />
-          <p className="text-center text-sm text-muted">입력한 문장은 조건을 찾는 데만 쓰고 저장하지 않아요.</p>
+          <p className="text-center text-sm text-muted">입력한 내용은 저장하지 않아요.</p>
         </div>
 
         <ul aria-label="예시 문장" className="flex flex-wrap justify-center gap-2">
@@ -46,7 +46,7 @@ export default function StartScreen({ notices, today, onSearch, onShowAll }: Sta
 
         <p className="flex flex-wrap items-center justify-center gap-x-3 text-sm text-ink-2">
           <span>
-            지금 진행 중 {summary.ongoing}건 · 이번 주 마감{" "}
+            접수 중 {summary.ongoing.toLocaleString()}건 · 이번 주 마감{" "}
             <strong className="text-danger">{summary.closingThisWeek}건</strong>
           </span>
           <button type="button" onClick={onShowAll} className="min-h-11 underline underline-offset-2 hover:text-ink">

@@ -2,8 +2,9 @@
 // go.kr · or.kr · 지정 예외 도메인만 공식 주소로 본다. 공고 주소가 없거나 공식이 아니면 출처 사이트 메인으로 보낸다
 import type { Notice } from "./notice";
 
-// .go.kr · .or.kr이 아니지만 공공기관이 운영하는 도메인 (소상공인24: 소상공인시장진흥공단)
-const OFFICIAL_EXCEPTIONS = ["sbiz24.kr"];
+// .go.kr · .or.kr이 아니지만 공공기관이 운영하는 도메인 (정부24: 행정안전부, 소상공인24: 소상공인시장진흥공단)
+// DB의 주소 검사(src/db/schema.ts OFFICIAL_URL)와 같은 목록을 쓴다
+const OFFICIAL_EXCEPTIONS = ["gov.kr", "sbiz24.kr"];
 
 function hostOf(url: string): string | null {
   try {

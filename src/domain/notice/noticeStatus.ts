@@ -15,20 +15,20 @@ export function noticeStatusOf(notice: NoticeSchedule, today: IsoDate): NoticeSt
   return "open";
 }
 
-// 진행 중 배지: 당일은 "오늘 마감", 그 외 "D-4"
+// 접수 중 배지: 당일은 "오늘 마감", 그 외 "D-4"
 export function formatDDay(daysLeft: number): string {
   return daysLeft === 0 ? "오늘 마감" : `D-${daysLeft}`;
 }
 
-// 진행 예정 배지: "내일 시작", "3일 후 시작"
+// 접수 예정 배지: "내일 시작", "3일 후 시작"
 export function formatStartsIn(daysUntil: number): string {
   return daysUntil === 1 ? "내일 시작" : `${daysUntil}일 후 시작`;
 }
 
 export const STATUS_LABEL: Record<NoticeStatus, string> = {
-  upcoming: "진행 예정",
-  open: "진행 중",
-  closing: "진행 중",
+  upcoming: "접수 예정",
+  open: "접수 중",
+  closing: "접수 중",
   closed: "마감",
   always: "상시",
 };
@@ -61,12 +61,12 @@ export function periodProgressOf(notice: NoticeSchedule, today: IsoDate): Period
 }
 
 export interface NoticeSummary {
-  ongoing: number; // 진행 중 (마감 임박 포함)
+  ongoing: number; // 접수 중 (마감 임박 포함)
   closingThisWeek: number; // 7일 안에 마감
   startingSoon: number; // 7일 안에 시작
 }
 
-// 첫 화면·보드 위 요약 ("지금 진행 중 N건 · 이번 주 마감 N건 · 7일 안에 시작 N건")
+// 첫 화면·보드 위 요약 ("지금 접수 중 N건 · 이번 주 마감 N건 · 7일 안에 시작 N건")
 export function summarizeNotices(notices: NoticeSchedule[], today: IsoDate): NoticeSummary {
   const summary: NoticeSummary = { ongoing: 0, closingThisWeek: 0, startingSoon: 0 };
   for (const notice of notices) {
