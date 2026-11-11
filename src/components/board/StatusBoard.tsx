@@ -33,7 +33,7 @@ export default function StatusBoard({ columns, recommendedIds, selectedId, onOpe
             aria-controls={`column-${column.key}`}
             onClick={() => setActiveTab(column.key)}
             className={`min-h-11 rounded-md text-sm font-medium ${
-              activeTab === column.key ? "bg-ink text-surface" : "text-ink-2 hover:bg-ground"
+              activeTab === column.key ? "bg-primary text-on-primary" : "text-ink-2 hover:bg-ground"
             }`}
           >
             {column.title} {column.cards.length}
@@ -51,11 +51,11 @@ export default function StatusBoard({ columns, recommendedIds, selectedId, onOpe
               key={column.key}
               id={`column-${column.key}`}
               aria-label={column.title}
-              className={`${activeTab === column.key ? "flex" : "hidden"} flex-col rounded-lg bg-ground p-2 ring-1 ring-line md:flex`}
+              className={`${activeTab === column.key ? "flex" : "hidden"} flex-col rounded-lg bg-ground p-2 md:flex`}
             >
-              <h3 className="flex items-center justify-between px-1 pb-2 text-sm font-semibold text-ink">
+              <h3 className="flex items-center justify-between px-1 pb-2 pt-0.5 text-[15px] font-bold tracking-tight text-ink">
                 {column.title}
-                <span className="rounded-full bg-surface px-2 text-xs font-medium text-muted">{column.cards.length}건</span>
+                <span className="rounded-sm bg-surface px-2 py-0.5 text-xs font-semibold tabular-nums text-ink-2">{column.cards.length}건</span>
               </h3>
 
               {column.cards.length === 0 ? (

@@ -135,7 +135,7 @@ export default function SearchHome({ notices, dictionary, syncedAt }: SearchHome
                     key={`${chip.kind}-${chip.value}`}
                     type="button"
                     onClick={() => search.removeChip(chip)}
-                    className="min-h-11 rounded-full border border-line-strong px-3 hover:bg-ground md:min-h-9"
+                    className="min-h-11 rounded-md border border-line-strong px-3 hover:bg-ground md:min-h-9"
                   >
                     &apos;{chipLabel(chip)}&apos; 빼고 찾기
                   </button>

@@ -38,6 +38,17 @@ test.describe("입력 전 첫 화면", () => {
     await expect(page.getByRole("article")).toHaveCount(0);
   });
 
+  test("입력 지우기 버튼은 글자를 적었을 때만 나타나고, 누르면 비운 뒤 입력창에 초점을 둡니다", async ({ page }) => {
+    const box = page.getByRole("searchbox", { name: "내 상황" });
+    await expect(page.getByRole("button", { name: "입력 지우기" })).toHaveCount(0);
+
+    await box.fill("창업");
+    await page.getByRole("button", { name: "입력 지우기" }).click();
+
+    await expect(box).toHaveValue("");
+    await expect(box).toBeFocused();
+  });
+
   test("서비스 이름과 슬로건을 가운데에 크게 보여줍니다", async ({ page }) => {
     await expect(page.getByRole("heading", { level: 1 })).toHaveText("혜택톡톡");
     await expect(page.getByText("이번 달 정부지원, 한눈에")).toBeVisible();

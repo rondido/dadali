@@ -1,9 +1,18 @@
 @import "tailwindcss";
 
-/* 혜택톡톡 디자인 토큰 (화면 시안 기준) */
+/* 혜택톡톡 디자인 토큰 */
 :root {
+  /* 바탕: 페이지는 흰색, ground는 보드 열처럼 묶어 보여줄 영역의 연한 회색 */
+  --background: #ffffff;
   --ground: #f6f7f9;
   --surface: #ffffff;
+
+  /* 기본색(파랑): 주요 버튼, 선택 상태, 초점. 흰 바탕·흰 글자 모두 대비 4.5:1 이상 */
+  --primary: #2563eb;
+  --primary-hover: #1d4ed8;
+  --primary-tint: #eff6ff;
+  --on-primary: #ffffff;
+
   --ink: #16181d;
   --ink-2: #3d434e;
   --muted: #5b616e;
@@ -20,6 +29,11 @@
 }
 
 @theme inline {
+  --color-background: var(--background);
+  --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
+  --color-primary-tint: var(--primary-tint);
+  --color-on-primary: var(--on-primary);
   --color-ground: var(--ground);
   --color-surface: var(--surface);
   --color-ink: var(--ink);
@@ -30,12 +44,24 @@
   --color-danger: var(--danger);
   --color-danger-tint: var(--danger-tint);
   --font-sans: "Pretendard Variable", Pretendard, -apple-system, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+
+  /* 라운드: 크기가 클수록 더 둥글게. 원형이어야 뜻이 있는 요소(닫기 버튼·기간 막대·날짜 원)만 rounded-full
+     sm 4px  배지·태그·건수
+     md 8px  버튼·칩·입력창·검색창 안 버튼
+     lg 12px 카드·보드 열·패널·검색창 상자·안내 상자
+     예외: 첫 화면 큰 검색창은 20px, 안쪽 버튼 14px */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
 }
 
 body {
-  background: var(--ground);
+  background: var(--background);
   color: var(--ink);
   font-family: var(--font-sans);
+  /* 한글을 글자 단위가 아닌 낱말 단위로 줄바꿈한다 ("환경개|선" 같은 끊김 방지). 아주 긴 낱말만 중간에서 끊는다 */
+  word-break: keep-all;
+  overflow-wrap: break-word;
 }
 
 /* 분야 색: 클래스 하나로 --tone-* 변수를 정해 두고 표시점·기간 막대가 따라 쓴다 */
@@ -51,12 +77,6 @@ body {
   height: 0.5rem;
   border-radius: 9999px;
   background: var(--tone-dot);
-}
-
-.card-icon {
-  width: 0.75rem;
-  height: 0.75rem;
-  flex: none;
 }
 
 /* 기간 달력 (PeriodCalendar): 남은 기간은 분야 색으로 진하게, 지난 기간은 회색으로 흐리게 */
