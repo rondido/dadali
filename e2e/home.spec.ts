@@ -7,10 +7,12 @@ test.describe("첫 화면", () => {
     await expect(page).toHaveTitle("혜택톡톡 - 내게 맞는 정부지원사업");
   });
 
-  test("접속하면 서비스명과 슬로건이 보입니다", async ({ page }) => {
+  test("접속하면 서비스명과 검색창, 예시 검색어만 보이고 공고 목록은 보이지 않습니다", async ({ page }) => {
     await page.goto("/");
 
-    await expect(page.getByText("혜택톡톡", { exact: true })).toBeVisible();
-    await expect(page.getByText("이번 달 정부지원, 한눈에")).toBeVisible();
+    await expect(page.getByRole("heading", { level: 1, name: "혜택톡톡" })).toBeVisible();
+    await expect(page.getByRole("searchbox")).toBeVisible();
+    await expect(page.getByRole("list", { name: "예시 검색어" }).getByRole("button")).toHaveCount(4);
+    await expect(page.getByRole("article")).toHaveCount(0);
   });
 });
