@@ -1,12 +1,12 @@
-# 공고 수집 (기획서 13장): 매일 새벽 5시, 1~3월 성수기에는 오후 5시에 한 번 더
+# 공고 수집 (기획서 13장): 매주 월·수·금요일 새벽 5시 (한국 시간)
 # 필요한 GitHub Secrets: DATABASE_URL(Supabase Session pooler 주소), DATA_GO_KR_KEY(공공데이터포털 인증키)
 # 실패하면 GitHub가 저장소 관리자에게 메일로 알린다 (Actions 실패 알림)
 name: 공고 수집
 
 on:
   schedule:
-    - cron: "0 20 * * *" # 매일 05:00 (한국 시간, UTC+9)
-    - cron: "0 8 * 1-3 *" # 1~3월 17:00 (한국 시간)
+    # cron은 UTC 기준이라 하루 앞선 요일로 적는다: 일·화·목 20:00 UTC = 월·수·금 05:00 KST
+    - cron: "0 20 * * 0,2,4"
   workflow_dispatch: # Actions 화면에서 직접 실행
 
 permissions:
