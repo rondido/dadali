@@ -22,6 +22,7 @@ export interface Notice extends NoticeSchedule {
   regionCodes: string[]; // 시·도 코드, 비면 전국
   industries: Industry[];
   topics: Topic[];
+  minorsOnly?: boolean; // 대상이 미성년자뿐 (AI 태깅). 나이대 조건으로 찾을 때는 뺀다
   detailUrl: string | null; // 원문 공고 주소. 없거나 공식 도메인이 아니면 sourceUrl로 보낸다
   sourceName: string; // 출처 사이트 이름 (예: K-Startup)
   sourceUrl: string; // 출처 사이트 메인 주소

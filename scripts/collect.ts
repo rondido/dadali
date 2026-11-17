@@ -95,6 +95,11 @@ async function collect(source: SourceName) {
     const byId = new Map(records.map((r) => [r.sourceId, r]));
     const rows = [...byId.values()];
 
+    // AI로 태깅한 뒤 원문 내용이 그대로면(tag_hash = 새 지문) 태그를 규칙 태그로 덮어쓰지 않는다
+    // 내용이 바뀌었으면 규칙 태그로 바꿔 두고, 다음 태깅(npm run tag)이 다시 분류한다
+    const keepAiTag = (column: string) =>
+      sql.raw(`case when notice.tag_hash = excluded.content_hash then notice.${column} else excluded.${column} end`);
+
     for (let i = 0; i < rows.length; i += BATCH) {
       const result = await db
         .insert(notice)
@@ -111,11 +116,13 @@ async function collect(source: SourceName) {
             parseStatus: sql`excluded.parse_status`,
             detailUrl: sql`excluded.detail_url`,
             summaryText: sql`excluded.summary_text`,
-            topics: sql`excluded.topics`,
-            ageGroups: sql`excluded.age_groups`,
-            regionCodes: sql`excluded.region_codes`,
-            industries: sql`excluded.industries`,
+            topics: keepAiTag("topics"),
+            ageGroups: keepAiTag("age_groups"),
+            regionCodes: keepAiTag("region_codes"),
+            industries: keepAiTag("industries"),
+            minorsOnly: keepAiTag("minors_only"),
             rawPayload: sql`excluded.raw_payload`,
+            contentHash: sql`excluded.content_hash`,
             updatedAt: sql`now()`,
           },
           // 운영자가 손으로 고친 공고는 덮어쓰지 않는다

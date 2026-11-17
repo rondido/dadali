@@ -12,11 +12,13 @@
     "test:e2e": "playwright test",
     "explore": "tsx scripts/explore-api.ts",
     "collect": "tsx scripts/collect.ts",
+    "tag": "tsx scripts/tag.ts",
     "db:generate": "drizzle-kit generate",
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^1.9.0",
     "date-fns": "^4.4.0",
     "drizzle-orm": "^0.45.4",
     "next": "15.5.28",

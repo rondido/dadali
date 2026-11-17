@@ -19,6 +19,7 @@ export interface NoticeRecord {
   regionCodes: RegionCode[];
   industries: Industry[];
   rawPayload: Record<string, unknown>;
+  contentHash: string; // 태깅에 쓰는 원문 필드의 지문 (aiTags.ts)
 }
 
 // API 값은 HTML 특수문자가 엔티티로 오기도 한다 ("기술개발(R&amp;D)")

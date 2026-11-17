@@ -1,5 +1,6 @@
 # 공고 수집 (기획서 13장): 매일 새벽 5시, 1~3월 성수기에는 오후 5시에 한 번 더
 # 필요한 GitHub Secrets: DATABASE_URL(Supabase Session pooler 주소), DATA_GO_KR_KEY(공공데이터포털 인증키)
+#                        ANTHROPIC_API_KEY(AI 태깅용, 없으면 태깅 단계만 건너뜀)
 # 실패하면 GitHub가 저장소 관리자에게 메일로 알린다 (Actions 실패 알림)
 name: 공고 수집
 
@@ -36,3 +37,12 @@ jobs:
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           DATA_GO_KR_KEY: ${{ secrets.DATA_GO_KR_KEY }}
+
+      # 새로 들어왔거나 내용이 바뀐 공고만 AI로 태깅한다 (scripts/tag.ts)
+      # 한 번에 100건까지만: 비용이 튀지 않게 하고, 남은 건 다음 수집 때 이어서 한다 (100건이 모두 Opus여도 약 $0.4)
+      # ANTHROPIC_API_KEY 시크릿이 없으면 스크립트가 태깅을 건너뛰고 성공으로 끝낸다
+      - name: AI 태깅
+        run: npm run tag -- --yes --limit 100
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
