@@ -129,10 +129,4 @@ describe("toBoardColumns", () => {
       expect(card.badge).toBe("상시");
     });
   });
-
-  it("접수 중 카드에는 기간 중 며칠째인지 담습니다", () => {
-    const [card] = cardsIn([noticeOf({ applyStart: "2026-11-07", applyEnd: "2026-11-21" })], "ongoing");
-
-    expect(card.progress).toEqual({ day: 4, total: 15 });
-  });
 });

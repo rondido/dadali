@@ -25,26 +25,28 @@ function renderHome(isSample = false) {
 }
 
 describe("HomeView", () => {
-  it("서비스명과 슬로건을 보여줍니다", () => {
+  it("첫 화면에는 서비스명과 검색창, 예시 검색어만 보여줍니다", () => {
     renderHome();
 
-    expect(screen.getByText("혜택톡톡")).toBeInTheDocument();
-    expect(screen.getByText("이번 달 정부지원, 한눈에")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { level: 1, name: "혜택톡톡" })).toBeInTheDocument();
+    expect(screen.getByRole("searchbox", { name: "내 상황" })).toBeInTheDocument();
+    expect(screen.getByRole("list", { name: "예시 검색어" })).toBeInTheDocument();
+    expect(screen.queryByRole("article")).not.toBeInTheDocument();
   });
 
   it("정부 공식 서비스가 아니라는 고지를 보여줍니다", () => {
     renderHome();
 
-    expect(screen.getByText(/정부 공식 서비스가\s*아니에요/)).toBeInTheDocument();
+    expect(screen.getByText(/정부 공식 서비스가 아니에요/)).toBeInTheDocument();
   });
 
   it("샘플 데이터일 때만 샘플이라고 알립니다", () => {
     renderHome(true);
-    expect(screen.getByText("샘플 데이터예요.")).toBeInTheDocument();
+    expect(screen.getByText(/샘플 데이터/)).toBeInTheDocument();
   });
 
   it("실제 데이터일 때는 샘플 안내를 보여주지 않습니다", () => {
     renderHome(false);
-    expect(screen.queryByText("샘플 데이터예요.")).not.toBeInTheDocument();
+    expect(screen.queryByText(/샘플 데이터/)).not.toBeInTheDocument();
   });
 });

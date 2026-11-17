@@ -2,7 +2,6 @@
 import { expect, test, type Page } from "@playwright/test";
 
 const SCENARIO = "서울에서 카페 하는 32살인데 가게 인테리어 지원 있나요?";
-const EXAMPLE = "서울 카페 인테리어";
 
 async function searchFor(page: Page, text: string) {
   await page.getByRole("searchbox", { name: "내 상황" }).fill(text);
@@ -24,18 +23,18 @@ test.beforeEach(async ({ page }) => {
 });
 
 test.describe("입력 전 첫 화면", () => {
-  test("입력창과 저장하지 않는다는 고지, 예시 문장 4개를 보여줍니다", async ({ page }) => {
+  test("입력창과 개인정보 안내, 예시 검색어만 보여줍니다", async ({ page }) => {
     await expect(page.getByRole("searchbox", { name: "내 상황" })).toBeVisible();
-    await expect(page.getByText("입력한 내용은 저장하지 않아요.")).toBeVisible();
-    await expect(page.getByRole("list", { name: "예시 문장" }).getByRole("button")).toHaveCount(4);
-    await expect(page.getByRole("button", { name: EXAMPLE })).toBeVisible();
-    await expect(page.getByRole("button", { name: "창업 지원금" })).toBeVisible();
+    await expect(page.getByText(/검색어는 저장하지 않아요/)).toBeVisible();
+    await expect(page.getByRole("heading", { level: 2 })).toHaveCount(0);
   });
 
-  test("검색창에 집중하도록 공고 카드 없이 건수 한 줄과 전체 보기 링크만 보여줍니다", async ({ page }) => {
-    await expect(page.getByText(/접수 중 11건 · 이번 주 마감\s*2건/)).toBeVisible();
-    await expect(page.getByRole("button", { name: "전체 지원사업 보기" })).toBeVisible();
-    await expect(page.getByRole("article")).toHaveCount(0);
+  test("예시 검색어를 누르면 그 문장으로 찾고 검색창에 조건 칩과 목록이 붙습니다", async ({ page }) => {
+    await page.getByRole("list", { name: "예시 검색어" }).getByRole("button", { name: "창업 지원금" }).click();
+
+    await expect(chips(page)).toHaveText([/주제\s*창업/]);
+    await expect(page.getByRole("region", { name: /^접수 중/ })).toBeVisible();
+    await expect(page.getByRole("link", { name: "혜택톡톡 첫 화면으로" })).toBeVisible();
   });
 
   test("입력 지우기 버튼은 글자를 적었을 때만 나타나고, 누르면 비운 뒤 입력창에 초점을 둡니다", async ({ page }) => {
@@ -49,9 +48,12 @@ test.describe("입력 전 첫 화면", () => {
     await expect(box).toBeFocused();
   });
 
-  test("서비스 이름과 슬로건을 가운데에 크게 보여줍니다", async ({ page }) => {
-    await expect(page.getByRole("heading", { level: 1 })).toHaveText("혜택톡톡");
-    await expect(page.getByText("이번 달 정부지원, 한눈에")).toBeVisible();
+  test("전체 지원사업 보기를 누르면 조건 없이 전체 목록을 엽니다", async ({ page }) => {
+    await page.getByRole("button", { name: "전체 지원사업 보기" }).click();
+
+    await expect(page).toHaveURL(/all=1/);
+    await expect(resultTitle(page)).toContainText("전체 지원사업");
+    await expect(page.getByRole("region", { name: /^접수 중/ }).getByRole("heading", { level: 2 })).toContainText("11");
   });
 });
 
@@ -65,20 +67,23 @@ test.describe("대표 시나리오 검색", () => {
     await expect(page).toHaveURL(/\?region=11&age=youth&biz=retail&topic=facility$/);
   });
 
-  test("조건에 맞을 수 있는 공고 수와 왜 걸렸는지 태그를 보여줍니다", async ({ page }) => {
+  test("조건에 맞을 수 있는 공고 수와 대상 조건 레이블을 보여주고, 내 조건과 맞은 레이블을 표시합니다", async ({ page }) => {
     await expect(resultTitle(page)).toHaveText("조건에 맞을 수 있는 지원사업 2건");
 
     const card = page.getByRole("article").filter({ hasText: "샘플 서울 소상공인 점포 환경개선 지원" });
     await expect(card).toContainText("D-1");
-    await expect(card.getByRole("list", { name: "검색 조건과 맞은 부분" })).toHaveText(/서울.*시설·인테리어/);
+    const matched = card.getByRole("list", { name: "대상 조건" }).locator("[data-matched]");
+    await expect(matched.filter({ hasText: "서울" })).toHaveCount(1);
+    await expect(matched.filter({ hasText: "시설·인테리어" })).toHaveCount(1);
   });
 
-  test("대상을 정하지 않아 통과한 공고에는 전국 태그를 붙이지 않고 맞은 조건만 보여줍니다", async ({ page }) => {
+  test("대상을 정하지 않아 통과한 전국 레이블은 맞음으로 표시하지 않습니다", async ({ page }) => {
     const card = page.getByRole("article").filter({ hasText: "샘플 스마트상점 기술 보급" });
-    const tags = card.getByRole("list", { name: "검색 조건과 맞은 부분" });
+    const labels = card.getByRole("list", { name: "대상 조건" });
 
-    await expect(tags).toContainText("도소매·음식");
-    await expect(tags).not.toContainText("전국");
+    await expect(labels).toContainText("전국");
+    await expect(labels.locator("[data-matched]").filter({ hasText: "도소매·음식" })).toHaveCount(1);
+    await expect(labels.locator("[data-matched]").filter({ hasText: "전국" })).toHaveCount(0);
   });
 
   test("칩의 ×를 누르면 그 조건을 빼고 바로 다시 거릅니다", async ({ page }) => {
@@ -87,6 +92,17 @@ test.describe("대표 시나리오 검색", () => {
     await expect(chips(page)).toHaveCount(3);
     await expect(page).not.toHaveURL(/topic=/);
     await expect(resultTitle(page)).toHaveText("조건에 맞을 수 있는 지원사업 12건");
+  });
+
+  test("칩을 빼면 토스트로 알리고, 되돌리기를 누르면 그 조건을 다시 넣습니다", async ({ page }) => {
+    await page.getByRole("button", { name: "시설·인테리어 조건 빼기" }).click();
+
+    const toast = page.getByRole("status").filter({ hasText: "시설·인테리어 조건을 뺐어요" });
+    await expect(toast).toBeVisible();
+    await toast.getByRole("button", { name: "되돌리기" }).click();
+
+    await expect(chips(page)).toHaveCount(4);
+    await expect(page).toHaveURL(/topic=facility/);
   });
 
   test("다시 방문하면 첫 화면을 건너뛰고 저장된 조건으로 보드를 엽니다", async ({ page }) => {
@@ -101,6 +117,7 @@ test.describe("대표 시나리오 검색", () => {
 
     await expect(page).toHaveURL(/\/$/);
     await expect(page.getByRole("button", { name: "지원사업 찾기" })).toBeVisible();
+    await expect(page.getByRole("status")).toContainText("저장된 조건을 지웠어요");
 
     // 다시 들어와도 저장된 조건으로 보드가 열리지 않습니다
     await page.goto("/");
@@ -118,8 +135,8 @@ test("전체 지원사업 보기에서 혜택톡톡을 누르면 첫 화면으�
   await expect(page.getByRole("button", { name: "지원사업 찾기" })).toBeVisible();
 });
 
-test("예시 문장을 누르면 바로 검색합니다", async ({ page }) => {
-  await page.getByRole("button", { name: "창업 지원금" }).click();
+test("창업 지원금을 검색하면 관심 주제로 거릅니다", async ({ page }) => {
+  await searchFor(page, "창업 지원금");
 
   await expect(chips(page)).toHaveText([/주제\s*창업/]);
 });
@@ -134,24 +151,31 @@ test("뜻이 둘인 지명은 다른 후보를 골라 바꿀 수 있습니다", 
 });
 
 test("+ 조건 추가로 지역을 직접 고를 수 있습니다", async ({ page }) => {
-  await page.getByRole("button", { name: "창업 지원금" }).click();
+  await searchFor(page, "창업 지원금");
   await page.getByRole("button", { name: "+ 조건 추가" }).click();
-  await page.getByRole("combobox", { name: /지역/ }).selectOption({ label: "부산" });
+  const dialog = page.getByRole("dialog", { name: "조건 추가" });
+  await dialog.getByRole("button", { name: "부산", exact: true }).click();
 
+  // 창을 닫지 않고 바로 칩이 바뀌고, 고른 값은 눌린 상태로 보인다
   await expect(chips(page).first()).toHaveText(/지역\s*부산/);
+  await expect(dialog.getByRole("button", { name: "부산", exact: true })).toHaveAttribute("aria-pressed", "true");
+
+  await page.keyboard.press("Escape");
+  await expect(dialog).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "+ 조건 추가" })).toBeFocused();
 });
 
 test.describe("조건으로 바꾸지 못한 단어", () => {
   test("공고명이나 지원 내용에 있으면 그 단어로 찾아 줍니다", async ({ page }) => {
     await searchFor(page, "복직 준비");
 
-    await expect(page.getByText("'복직'이 들어간 지원사업만 보여 드려요.")).toBeVisible();
+    await expect(page.getByText("'복직'이 들어간 공고만 보여요")).toBeVisible();
     await expect(resultTitle(page)).toHaveText("조건에 맞을 수 있는 지원사업 1건");
   });
 
   test("어디에도 없으면 이해하지 못했다고 알려 줍니다", async ({ page }) => {
     await searchFor(page, "고양이 카페");
 
-    await expect(page.getByText(/'고양이'는 알아듣지 못했어요/)).toBeVisible();
+    await expect(page.getByText(/'고양이'는 조건으로 찾지 못했어요/)).toBeVisible();
   });
 });

@@ -1,13 +1,7 @@
 // 검색 결과를 접수 예정·접수 중·상시 세 열로 나눈다 (상태 보드 전용, 기획서 5장 상태 정의)
 // 마감된 공고는 보드에 넣지 않는다
 import type { IsoDate, NoticeSchedule } from "@/domain/notice/notice";
-import {
-  noticeStatusOf,
-  periodProgressOf,
-  statusBadgeOf,
-  type NoticeStatus,
-  type PeriodProgress,
-} from "@/domain/notice/noticeStatus";
+import { noticeStatusOf, statusBadgeOf, type NoticeStatus } from "@/domain/notice/noticeStatus";
 import type { NoticeMatch } from "@/domain/search/matchNotices";
 
 export type BoardColumnKey = "upcoming" | "ongoing" | "always";
@@ -20,7 +14,6 @@ export interface BoardCard {
   status: NoticeStatus;
   badge: string; // "3일 후 시작", "D-4", "오늘 마감", "상시"
   urgent: boolean; // 마감 7일 이내 → 빨간색
-  progress: PeriodProgress | null; // 접수 중 카드의 기간 막대
 }
 
 export interface BoardColumn {
@@ -42,6 +35,12 @@ const COLUMNS: { key: BoardColumnKey; title: string; statuses: NoticeStatus[]; c
   { key: "always", title: "상시", statuses: ["always"], compare: byTitle },
 ];
 
+// 공고 하나를 목록 줄 데이터로 (상태·배지). 마감된 공고도 "마감" 배지로 만든다 (최근 본 공고 목록에서 쓴다)
+export function boardCardOf(match: NoticeMatch, today: IsoDate): BoardCard {
+  const { label, urgent } = statusBadgeOf(match.notice, today);
+  return { match, status: noticeStatusOf(match.notice, today), badge: label, urgent };
+}
+
 export function toBoardColumns(matches: NoticeMatch[], today: IsoDate): BoardColumn[] {
   const withStatus = matches.map((match) => ({ match, status: noticeStatusOf(match.notice, today) }));
 
@@ -51,9 +50,6 @@ export function toBoardColumns(matches: NoticeMatch[], today: IsoDate): BoardCol
     cards: withStatus
       .filter(({ status }) => statuses.includes(status))
       .sort((a, b) => compare(a.match.notice, b.match.notice))
-      .map(({ match, status }) => {
-        const { label, urgent } = statusBadgeOf(match.notice, today);
-        return { match, status, badge: label, urgent, progress: periodProgressOf(match.notice, today) };
-      }),
+      .map(({ match }) => boardCardOf(match, today)),
   }));
 }

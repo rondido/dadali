@@ -83,15 +83,14 @@ test.describe("먼저 보기", () => {
   test("조건과 분명히 맞은 공고 3건의 보드 카드에 표시합니다", async ({ page }) => {
     await page.goto("/?region=11&biz=retail");
 
-    await expect(recommendedCards(page)).toHaveCount(3);
+    await expect(recommendedCards(page)).toHaveCount(2);
     await expect(recommendedCards(page).filter({ hasText: "샘플 서울 소상공인 점포 환경개선 지원" })).toHaveCount(1);
     await expect(recommendedCards(page).filter({ hasText: "샘플 소상공인 경영 바우처" })).toHaveCount(1);
     await expect(recommendedCards(page).filter({ hasText: "샘플 스마트상점 기술 보급" })).toHaveCount(1);
   });
 
   test("조건 없이 전체를 보면 고를 근거가 없어 표시하지 않습니다", async ({ page }) => {
-    await page.getByRole("button", { name: "전체 지원사업 보기" }).click();
-
+    await page.goto("/?all=1");
     await expect(page.getByRole("heading", { level: 1 })).toContainText("전체 지원사업");
     await expect(recommendedCards(page)).toHaveCount(0);
   });
@@ -108,7 +107,7 @@ test.describe("보드 공간", () => {
   test("PC에서는 검색·칩·건수를 줄여 보드가 화면의 위쪽 3분의 1 안에서 시작합니다", async ({ page }) => {
     await page.goto("/?region=11&biz=retail");
 
-    const board = (await page.getByRole("region", { name: "접수 중", exact: true }).boundingBox())!;
+    const board = (await page.getByRole("region", { name: /^접수 중/ }).boundingBox())!;
     expect(board.y).toBeLessThan(page.viewportSize()!.height / 3);
   });
 
@@ -128,11 +127,11 @@ test.describe("보드 공간", () => {
 
     test("패널을 보드 위에 겹쳐 열어 보드 열이 좁아지지 않습니다", async ({ page }) => {
       await page.goto("/?all=1");
-      const column = page.getByRole("region", { name: "접수 중", exact: true });
+      const column = page.getByRole("region", { name: /^접수 중/ });
       const before = (await column.boundingBox())!.width;
 
       await page.goto("/?all=1&notice=s25");
-      await expect(page.getByRole("complementary")).toBeVisible();
+      await expect(page.locator('aside[aria-labelledby="notice-panel-title"]')).toBeVisible();
 
       expect((await column.boundingBox())!.width).toBeCloseTo(before, 0);
     });

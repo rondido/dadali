@@ -46,10 +46,10 @@ export default function ConditionPicker({ notices, today, onApply }: ConditionPi
                     type="button"
                     aria-pressed={pressed}
                     onClick={() => setSelected((current) => toggleChip(current, chip))}
-                    className={`min-h-11 rounded-md border px-4 text-sm ${
+                    className={`min-h-11 rounded-md px-4 text-sm ${
                       pressed
-                        ? "border-primary bg-primary text-on-primary"
-                        : "border-line-strong bg-surface text-ink hover:bg-ground"
+                        ? "bg-primary text-on-primary"
+                        : "bg-ground text-ink hover:bg-line"
                     }`}
                   >
                     {option.label}
@@ -65,7 +65,7 @@ export default function ConditionPicker({ notices, today, onApply }: ConditionPi
         type="button"
         disabled={!ready}
         onClick={() => onApply(selected)}
-        className="min-h-11 self-start rounded-md bg-primary px-5 font-semibold text-on-primary hover:bg-primary-hover disabled:cursor-not-allowed disabled:bg-line disabled:text-ink-2"
+        className="min-h-11 self-start rounded-md bg-primary px-5 font-semibold text-on-primary hover:bg-primary-hover disabled:bg-line disabled:text-ink-2"
       >
         {ready ? `지원사업 ${count.toLocaleString()}건 보기` : "지원사업 보기"}
       </button>
