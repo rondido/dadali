@@ -24,6 +24,8 @@ function checkOne(selected: string | null, values: string[], label: (v: string) 
 
 function matchConditions(notice: Notice, conditions: SearchConditions): string[] | null {
   const region = checkOne(conditions.region, notice.regionCodes, regionLabel, "전국");
+  // 미성년자 전용 공고는 나이대(청년·중장년·어르신)로 찾을 때 대상이 아니다
+  if (conditions.age !== null && notice.minorsOnly) return null;
   const age = checkOne(conditions.age, notice.ageGroups, ageLabel);
   const biz = checkOne(conditions.biz, notice.industries, industryLabel);
   if (!region || !age || !biz) return null;

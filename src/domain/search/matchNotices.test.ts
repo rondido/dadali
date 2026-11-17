@@ -30,6 +30,13 @@ function idsOf(notices: Notice[], conditions = EMPTY_CONDITIONS, keywords: strin
 }
 
 describe("matchNotices", () => {
+  it("미성년자 전용 공고는 나이대 조건이 있을 때 빠지고, 없을 때는 보입니다", () => {
+    const notices = [noticeOf({ id: "kids", minorsOnly: true }), noticeOf({ id: "all" })];
+
+    expect(idsOf(notices, { ...EMPTY_CONDITIONS, age: "youth" })).toEqual(["all"]);
+    expect(idsOf(notices)).toEqual(["kids", "all"]);
+  });
+
   it("조건이 없으면 모든 공고를 태그 없이 반환합니다", () => {
     const { matches } = matchNotices([noticeOf({ id: "a" }), noticeOf({ id: "b" })], EMPTY_CONDITIONS);
 

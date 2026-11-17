@@ -51,6 +51,7 @@ export async function loadHomeData(
     ageGroups: notice.ageGroups,
     regionCodes: notice.regionCodes,
     industries: notice.industries,
+    minorsOnly: notice.minorsOnly,
   };
   type Row = NoticeRow;
   type TargetColumn = typeof notice.regionCodes | typeof notice.ageGroups | typeof notice.industries;
@@ -63,6 +64,7 @@ export async function loadHomeData(
   const matchesConditions = and(
     allOr(notice.regionCodes, conditions.region),
     allOr(notice.ageGroups, conditions.age),
+    conditions.age === null ? undefined : eq(notice.minorsOnly, false),
     allOr(notice.industries, conditions.biz),
     conditions.topics.length > 0 ? arrayOverlaps(notice.topics, conditions.topics) : undefined,
   );
@@ -126,6 +128,7 @@ interface NoticeRow {
   ageGroups: string[];
   regionCodes: string[];
   industries: string[];
+  minorsOnly: boolean;
 }
 
 function toNotice(row: NoticeRow): Notice {
@@ -143,6 +146,7 @@ function toNotice(row: NoticeRow): Notice {
     regionCodes: row.regionCodes,
     industries: row.industries.filter(isIndustry),
     topics: row.topics.filter(isTopic),
+    minorsOnly: row.minorsOnly,
     detailUrl: row.detailUrl,
     sourceName: source.name,
     sourceUrl: source.url,

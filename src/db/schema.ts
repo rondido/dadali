@@ -91,6 +91,14 @@ export const notice = pgTable(
     linkStatus: linkStatusEnum("link_status"),
     rawPayload: jsonb("raw_payload").notNull(), // 원본 API 응답
 
+    // AI 태깅 (scripts/tag.ts). content_hash는 태깅에 쓰는 원문 필드의 지문으로 수집이 채운다
+    // tag_hash가 content_hash와 같으면 이미 태깅한 내용이라 수집이 태그를 덮어쓰지 않고, 태깅도 다시 하지 않는다
+    contentHash: text("content_hash"),
+    tagHash: text("tag_hash"),
+    tagModel: text("tag_model"),
+    taggedAt: timestamp("tagged_at", { withTimezone: true }),
+    minorsOnly: boolean("minors_only").notNull().default(false), // 대상이 미성년자뿐 (나이대 조건이 있으면 뺀다)
+
     firstSeenAt: timestamp("first_seen_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   },

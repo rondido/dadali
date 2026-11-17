@@ -15,6 +15,13 @@
       "when": 1794361142876,
       "tag": "0001_strange_shinko_yamashiro",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1794897955113,
+      "tag": "0002_ai_tagging",
+      "breakpoints": true
     }
   ]
 }
