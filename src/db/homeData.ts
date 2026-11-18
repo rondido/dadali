@@ -1,5 +1,5 @@
 // 메인 화면에 보낼 공고 (서버 전용). 수집한 공고를 DB에서 읽어 화면의 Notice 모양으로 바꾼다
-// 상시 혜택은 1만 건이 넘어 한꺼번에 보내지 않는다. 검색 조건이 있을 때만 서버에서 걸러 일부를 보낸다
+// 상시 혜택은 1만 건이 넘어 한꺼번에 보내지 않는다. 검색 조건이나 남은 단어가 있을 때만 서버에서 걸러 일부를 보낸다
 import { SAMPLE_NOTICES, SAMPLE_SYNCED_AT } from "@/data/sampleNotices";
 import type { IsoDate, Notice } from "@/domain/notice/notice";
 import { sourceInfoOf } from "@/domain/notice/sources";
@@ -25,6 +25,7 @@ function isSampleMode(): boolean {
 
 export async function loadHomeData(
   conditions: SearchConditions,
+  keywords: string[],
   selectedId: string | null,
   today: IsoDate,
 ): Promise<HomeData> {
@@ -32,7 +33,7 @@ export async function loadHomeData(
 
   const { db } = await import("./client");
   const { notice, syncLog } = await import("./schema");
-  const { and, arrayContains, arrayOverlaps, asc, count, desc, eq, gte, isNull, max, ne, or, sql } = await import(
+  const { and, arrayContains, arrayOverlaps, asc, count, desc, eq, gte, ilike, isNull, max, ne, or, sql } = await import(
     "drizzle-orm"
   );
 
@@ -90,23 +91,38 @@ export async function loadHomeData(
     sql` + `,
   );
   // 분명히 맞은 혜택을 먼저, 그다음 지역을 콕 집은 혜택, 이름순
-  const alwaysQuery = filtered
-    ? db
-        .select(columns)
-        .from(notice)
-        .where(alwaysWhere)
-        .orderBy(desc(strength), desc(sql`cardinality(${notice.regionCodes})`), asc(notice.title))
-        .limit(ALWAYS_LIMIT)
-    : Promise.resolve([] as Row[]);
-  const alwaysCountQuery = db.select({ n: count() }).from(notice).where(filtered ? alwaysWhere : and(visible, eq(notice.isAlways, true)));
+  const alwaysRowsOf = (where: ReturnType<typeof and>) =>
+    db
+      .select(columns)
+      .from(notice)
+      .where(where)
+      .orderBy(desc(strength), desc(sql`cardinality(${notice.regionCodes})`), asc(notice.title))
+      .limit(ALWAYS_LIMIT);
+  const countOf = async (where: ReturnType<typeof and>) => (await db.select({ n: count() }).from(notice).where(where))[0].n;
+
+  // 남은 단어가 공고명·요약에 하나라도 든 상시 혜택 (matchNotices의 남은 단어 검색과 같은 규칙)
+  // 단어 속 %·_·\는 글자 그대로 찾는다
+  const likeOf = (word: string) => `%${word.replace(/[\\%_]/g, (c) => `\\${c}`)}%`;
+  const keywordWhere =
+    keywords.length > 0
+      ? or(...keywords.flatMap((word) => [ilike(notice.title, likeOf(word)), ilike(notice.summaryText, likeOf(word))]))
+      : undefined;
+
+  // 상시 혜택 고르기: 남은 단어가 든 혜택이 있으면 그것을, 없으면 조건으로 고른다 (조건도 없으면 보내지 않는다)
+  // 단어가 든 혜택이 없을 때 조건으로 고르는 이유: 화면은 어느 공고에도 없는 단어를 무시하고 조건 결과를 보여준다
+  const loadAlways = async (): Promise<{ always: Row[]; alwaysTotal: number; picked: boolean }> => {
+    if (keywordWhere) {
+      const where = and(alwaysWhere, keywordWhere);
+      const [always, alwaysTotal] = await Promise.all([alwaysRowsOf(where), countOf(where)]);
+      if (always.length > 0) return { always, alwaysTotal, picked: true };
+    }
+    if (!filtered) return { always: [], alwaysTotal: await countOf(and(visible, eq(notice.isAlways, true))), picked: false };
+    const [always, alwaysTotal] = await Promise.all([alwaysRowsOf(alwaysWhere), countOf(alwaysWhere)]);
+    return { always, alwaysTotal, picked: true };
+  };
   const syncedQuery = db.select({ at: max(syncLog.finishedAt) }).from(syncLog).where(eq(syncLog.ok, true));
 
-  const [dated, always, [{ n: alwaysTotal }], [{ at }]] = await Promise.all([
-    datedQuery,
-    alwaysQuery,
-    alwaysCountQuery,
-    syncedQuery,
-  ]);
+  const [dated, { always, alwaysTotal, picked }, [{ at }]] = await Promise.all([datedQuery, loadAlways(), syncedQuery]);
   const rows: Row[] = [...dated, ...always];
 
   // 링크로 들어온 공고가 위 목록에 없으면(조건 없이 연 상시 혜택 등) 따로 불러 상세 패널이 열리게 한다
@@ -116,9 +132,9 @@ export async function loadHomeData(
   }
 
   let alwaysNote: string | null = null;
-  if (!filtered && alwaysTotal > 0) {
+  if (!picked && alwaysTotal > 0) {
     alwaysNote = `조건을 넣으면 상시 혜택 ${alwaysTotal.toLocaleString()}건에서 찾아드려요`;
-  } else if (filtered && alwaysTotal > ALWAYS_LIMIT) {
+  } else if (picked && alwaysTotal > ALWAYS_LIMIT) {
     alwaysNote = `${alwaysTotal.toLocaleString()}건 중 ${ALWAYS_LIMIT}건`;
   }
 

@@ -32,6 +32,7 @@ import {
   type DetailFilters,
 } from "@/domain/search/detailFilters";
 import { interpretQuery, type DictionaryEntry } from "@/domain/search/interpretQuery";
+import { keywordsFromParams, writeKeywords } from "@/domain/search/keywords";
 import { loadSavedConditions, saveConditions } from "./savedConditions";
 
 // 조건 없이 전체 보드를 볼 때 URL에 붙이는 표시
@@ -46,22 +47,23 @@ const STALL_MS = 8000;
 // 해석 결과 중 URL에 담지 않는 것. 새로고침하면 사라진다
 interface InterpretationNotes {
   regionChoices: RegionCode[];
-  unknownTerms: string[];
   query: string | null; // 방금 검색한 문장. 칩이 이 문장에서 나왔다고 알릴 때만 쓰고, 조건을 바꾸면 지운다 (저장하지 않는다)
 }
 
-const NO_NOTES: InterpretationNotes = { regionChoices: [], unknownTerms: [], query: null };
+const NO_NOTES: InterpretationNotes = { regionChoices: [], query: null };
 
 // 화면에만 먼저 반영한 상태 (아직 서버에 보내지 않았거나 응답을 기다리는 중)
 interface LocalView {
   conditions: SearchConditions;
   showResults: boolean;
+  // 조건으로 바꾸지 못한 단어 (주소 kw). 서버가 상시 혜택 전체의 공고명·요약에서 찾는다
+  keywords: string[];
 }
 
 // 이 상태를 나타내는 주소의 검색 부분 ("region=11&topic=facility", 조건이 없으면 "all=1", 첫 화면이면 "")
 function queryOf(view: LocalView, details: DetailFilters): string {
   if (!view.showResults) return "";
-  const params = conditionsToParams(view.conditions);
+  const params = writeKeywords(conditionsToParams(view.conditions), view.keywords);
   if (!hasConditions(view.conditions)) params.set(SHOW_ALL_PARAM, "1");
   return writeDetails(params, details).toString();
 }
@@ -73,6 +75,7 @@ export function useSearch(dictionary: DictionaryEntry[]) {
   const [, startTransition] = useTransition();
 
   const urlConditions = useMemo(() => conditionsFromParams(params), [params]);
+  const urlKeywords = useMemo(() => keywordsFromParams(params), [params]);
   const urlNoticeId = params.get(NOTICE_PARAM);
   const urlShowResults = hasConditions(urlConditions) || params.has(SHOW_ALL_PARAM) || urlNoticeId !== null;
 
@@ -86,6 +89,7 @@ export function useSearch(dictionary: DictionaryEntry[]) {
   detailsRef.current = details;
   const conditions = local?.conditions ?? urlConditions;
   const showResults = local?.showResults ?? urlShowResults;
+  const keywords = local?.keywords ?? urlKeywords;
   // 방금 누른 공고 (주소가 아직 따라오지 않음)
   const [pendingNoticeId, setPendingNoticeId] = useState<string | null>(null);
   // 조건을 바꾸면 열려 있던 패널은 닫는다 (새 결과에 그 공고가 없을 수 있다)
@@ -199,8 +203,13 @@ export function useSearch(dictionary: DictionaryEntry[]) {
     window.history.replaceState(null, "", query ? `${pathname}?${query}` : pathname);
   };
 
-  const go = (next: SearchConditions, when: "now" | "later" = "now", method: "push" | "replace" = "push") =>
-    change({ conditions: next, showResults: true }, when, method);
+  // 조건 칩을 바꿔도 남은 단어는 그대로 둔다. 새로 검색하거나 직접 고르면 바꾼다
+  const go = (
+    next: SearchConditions,
+    when: "now" | "later" = "now",
+    method: "push" | "replace" = "push",
+    nextKeywords: string[] = keywords,
+  ) => change({ conditions: next, showResults: true, keywords: nextKeywords }, when, method);
 
   return {
     ready: checkedSaved || params.size > 0,
@@ -216,18 +225,18 @@ export function useSearch(dictionary: DictionaryEntry[]) {
     showResults,
     conditions,
     regionChoices: notes.regionChoices.filter((code) => code !== conditions.region),
-    unknownTerms: notes.unknownTerms,
+    unknownTerms: keywords,
 
-    // 문장을 해석해 조건을 바꾼다. 문장 자체는 어디에도 남기지 않는다
+    // 문장을 해석해 조건을 바꾼다. 문장 자체는 남기지 않고, 조건으로 바꾸지 못한 단어만 주소(kw)에 담는다
     search(text: string) {
       const result = interpretQuery(text, dictionary);
-      go(result.conditions);
-      setNotes({ regionChoices: result.regionChoices, unknownTerms: result.unknownTerms, query: text.trim() });
+      go(result.conditions, "now", "push", result.unknownTerms);
+      setNotes({ regionChoices: result.regionChoices, query: text.trim() });
     },
     // 직접 고른 조건으로 찾는다. 해석한 문장이 없으므로 안내도 비운다
     applyConditions(next: SearchConditions) {
       setNotes(NO_NOTES);
-      go(next);
+      go(next, "now", "push", []);
     },
     // 칩 ×: 칩은 바로 빼고, 서버 요청은 연달아 누르는 동안 모은다
     removeChip(chip: ConditionChip) {
@@ -252,7 +261,7 @@ export function useSearch(dictionary: DictionaryEntry[]) {
     // 카드를 누르면 상세 패널을 연다. 이미 열려 있으면 기록을 쌓지 않고 내용만 바꾼다
     // 낙관적으로 열지 않고 서버 응답 뒤에 열린다. 모아 둔 조건 변경이 있으면 같은 요청에 함께 담는다
     openNotice(id: string) {
-      const view = { conditions, showResults: true };
+      const view = { conditions, showResults: true, keywords };
       const nextParams = new URLSearchParams(queryOf(view, details));
       nextParams.set(NOTICE_PARAM, id);
       clearTimer();
@@ -275,7 +284,7 @@ export function useSearch(dictionary: DictionaryEntry[]) {
     },
     showAll() {
       setNotes(NO_NOTES);
-      go(EMPTY_CONDITIONS);
+      go(EMPTY_CONDITIONS, "now", "push", []);
     },
     // 저장된 조건을 지우고 첫 화면으로 (전환은 바로 시작한다)
     details,
@@ -286,7 +295,7 @@ export function useSearch(dictionary: DictionaryEntry[]) {
     startOver() {
       setNotes(NO_NOTES);
       saveConditions(EMPTY_CONDITIONS);
-      change({ conditions: EMPTY_CONDITIONS, showResults: false }, "now", "push");
+      change({ conditions: EMPTY_CONDITIONS, showResults: false, keywords: [] }, "now", "push");
     },
   };
 }
