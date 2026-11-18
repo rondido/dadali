@@ -42,6 +42,19 @@ function idsIn(notices: Notice[], key: BoardColumnKey): string[] {
 }
 
 describe("toBoardColumns", () => {
+  it("열 안에서는 조건과 분명히 맞은 공고가 먼저이고, 같으면 마감 빠른 순입니다", () => {
+    const open = { applyStart: "2026-11-01" };
+    const matches = [
+      { notice: noticeOf({ ...open, id: "soon-open", applyEnd: "2026-11-12" }), reasons: [], strength: 0 },
+      { notice: noticeOf({ ...open, id: "later-explicit", applyEnd: "2026-11-30" }), reasons: [], strength: 2 },
+      { notice: noticeOf({ ...open, id: "soon-explicit", applyEnd: "2026-11-20" }), reasons: [], strength: 2 },
+      { notice: noticeOf({ ...open, id: "one-hit", applyEnd: "2026-11-15" }), reasons: [], strength: 1 },
+    ];
+
+    const ids = toBoardColumns(matches, TODAY).find((c) => c.key === "ongoing")!.cards.map((c) => c.match.notice.id);
+    expect(ids).toEqual(["soon-explicit", "later-explicit", "one-hit", "soon-open"]);
+  });
+
   it("접수 예정 → 접수 중 → 상시 순서로 세 열을 만듭니다", () => {
     expect(columnsOf([]).map((c) => c.title)).toEqual(["접수 예정", "접수 중", "상시"]);
   });

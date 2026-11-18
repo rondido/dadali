@@ -77,13 +77,25 @@ export async function loadHomeData(
 
   const alwaysWhere = and(visible, eq(notice.isAlways, true), matchesConditions);
   const filtered = hasConditions(conditions);
-  // 지역을 콕 집은 혜택을 먼저, 그다음 이름순
+  // 조건과 태그로 분명히 맞은 개수 (matchNotices의 strengthOf와 같은 규칙). 상시 혜택은 일부만 보내므로 이 순서로 고른다
+  const hit = (column: TargetColumn, value: string | null) =>
+    value === null ? sql`0` : sql`(case when ${value} = any(${column}) then 1 else 0 end)`;
+  const strength = sql.join(
+    [
+      hit(notice.regionCodes, conditions.region),
+      hit(notice.ageGroups, conditions.age),
+      hit(notice.industries, conditions.biz),
+      ...conditions.topics.map((topic) => sql`(case when ${topic} = any(${notice.topics}) then 1 else 0 end)`),
+    ],
+    sql` + `,
+  );
+  // 분명히 맞은 혜택을 먼저, 그다음 지역을 콕 집은 혜택, 이름순
   const alwaysQuery = filtered
     ? db
         .select(columns)
         .from(notice)
         .where(alwaysWhere)
-        .orderBy(desc(sql`cardinality(${notice.regionCodes})`), asc(notice.title))
+        .orderBy(desc(strength), desc(sql`cardinality(${notice.regionCodes})`), asc(notice.title))
         .limit(ALWAYS_LIMIT)
     : Promise.resolve([] as Row[]);
   const alwaysCountQuery = db.select({ n: count() }).from(notice).where(filtered ? alwaysWhere : and(visible, eq(notice.isAlways, true)));

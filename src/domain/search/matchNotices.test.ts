@@ -30,6 +30,20 @@ function idsOf(notices: Notice[], conditions = EMPTY_CONDITIONS, keywords: strin
 }
 
 describe("matchNotices", () => {
+  it("조건과 태그로 분명히 맞은 개수를 세고, 대상이 비어 통과한 것은 세지 않습니다", () => {
+    const conditions = { ...EMPTY_CONDITIONS, region: "11" as const, age: "youth" as const, topics: ["fund" as const, "house" as const] };
+    const notices = [
+      noticeOf({ id: "explicit", regionCodes: ["11"], ageGroups: ["youth"], topics: ["fund", "house"] }),
+      noticeOf({ id: "open", topics: ["fund"] }),
+    ];
+
+    const strengths = matchNotices(notices, conditions).matches.map((m) => [m.notice.id, m.strength]);
+    expect(strengths).toEqual([
+      ["explicit", 4],
+      ["open", 1],
+    ]);
+  });
+
   it("미성년자 전용 공고는 나이대 조건이 있을 때 빠지고, 없을 때는 보입니다", () => {
     const notices = [noticeOf({ id: "kids", minorsOnly: true }), noticeOf({ id: "all" })];
 
@@ -41,8 +55,8 @@ describe("matchNotices", () => {
     const { matches } = matchNotices([noticeOf({ id: "a" }), noticeOf({ id: "b" })], EMPTY_CONDITIONS);
 
     expect(matches).toEqual([
-      { notice: expect.objectContaining({ id: "a" }), reasons: [] },
-      { notice: expect.objectContaining({ id: "b" }), reasons: [] },
+      { notice: expect.objectContaining({ id: "a" }), reasons: [], strength: 0 },
+      { notice: expect.objectContaining({ id: "b" }), reasons: [], strength: 0 },
     ]);
   });
 

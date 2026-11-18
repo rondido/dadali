@@ -7,6 +7,9 @@ import type { SearchConditions } from "./conditions";
 export interface NoticeMatch {
   notice: Notice;
   reasons: string[]; // 예: ["서울", "시설·인테리어"]
+  // 조건과 태그로 분명히 맞은 개수 (지역·나이대·하는 일 각 1, 맞은 주제마다 1). 대상이 비어 통과한 것은 세지 않는다
+  // 보드 열 안에서 분명히 맞은 공고를 먼저 보여주는 데 쓴다. 관심·최근 공고처럼 검색과 무관한 목록은 없다(0)
+  strength?: number;
 }
 
 export interface MatchResult {
@@ -36,6 +39,17 @@ function matchConditions(notice: Notice, conditions: SearchConditions): string[]
   return [...region, ...age, ...biz, ...topics.map(topicLabel)];
 }
 
+// 통과한 공고가 조건과 태그로 분명히 맞은 개수
+export function strengthOf(notice: Notice, conditions: SearchConditions): number {
+  const hits = (selected: string | null, values: string[]) => (selected !== null && values.includes(selected) ? 1 : 0);
+  return (
+    hits(conditions.region, notice.regionCodes) +
+    hits(conditions.age, notice.ageGroups) +
+    hits(conditions.biz, notice.industries) +
+    conditions.topics.filter((t) => notice.topics.includes(t)).length
+  );
+}
+
 function containsKeyword(notice: Notice, keyword: string): boolean {
   return notice.title.includes(keyword) || notice.summary.includes(keyword);
 }
@@ -43,7 +57,7 @@ function containsKeyword(notice: Notice, keyword: string): boolean {
 export function matchNotices(notices: Notice[], conditions: SearchConditions, keywords: string[] = []): MatchResult {
   const matches = notices.flatMap((notice) => {
     const reasons = matchConditions(notice, conditions);
-    return reasons ? [{ notice, reasons }] : [];
+    return reasons ? [{ notice, reasons, strength: strengthOf(notice, conditions) }] : [];
   });
 
   // 어느 공고에도 없는 단어로 결과를 0건으로 만들지 않도록, 한 건이라도 걸리는 단어만 쓴다
