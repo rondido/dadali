@@ -44,6 +44,47 @@ describe("matchNotices", () => {
     ]);
   });
 
+  describe("시·군·구", () => {
+    const notices = [
+      noticeOf({ id: "mapo", org: "서울특별시 마포구", regionCodes: ["11"] }),
+      noticeOf({ id: "gwangjin", org: "서울특별시 광진구", regionCodes: ["11"] }),
+      noticeOf({ id: "seoul", org: "서울특별시", regionCodes: ["11"] }),
+      noticeOf({ id: "nation", org: "보건복지부" }),
+      noticeOf({ id: "busan-jung", org: "부산광역시 중구", regionCodes: ["26"] }),
+    ];
+
+    it("시·군·구를 정하면 같은 시·도의 다른 시·군·구 기관 공고를 빼고, 그 시·군·구 공고를 더 맞은 것으로 셉니다", () => {
+      const { matches } = matchNotices(notices, { ...EMPTY_CONDITIONS, region: "11", district: "마포구" });
+
+      expect(matches.map((m) => [m.notice.id, m.reasons, m.strength])).toEqual([
+        ["mapo", ["마포구"], 2],
+        ["seoul", ["서울"], 1],
+        ["nation", ["전국"], 0],
+      ]);
+    });
+
+    it("시·도로만 찾으면 다른 시·군·구 공고도 보여주되 시·군·구 공고로 표시합니다", () => {
+      const { matches } = matchNotices(notices, { ...EMPTY_CONDITIONS, region: "11" });
+
+      expect(matches.map((m) => [m.notice.id, m.local ?? false])).toEqual([
+        ["mapo", true],
+        ["gwangjin", true],
+        ["seoul", false],
+        ["nation", false],
+      ]);
+    });
+
+    it("광주·전남 통합 기관명도 두 시·도의 시·군·구로 읽습니다", () => {
+      const merged = [
+        noticeOf({ id: "dong", org: "전남광주통합특별시 동구", regionCodes: ["29", "46"] }),
+        noticeOf({ id: "suncheon", org: "전남광주통합특별시 순천시", regionCodes: ["29", "46"] }),
+      ];
+
+      expect(idsOf(merged, { ...EMPTY_CONDITIONS, region: "29", district: "동구" })).toEqual(["dong"]);
+      expect(idsOf(merged, { ...EMPTY_CONDITIONS, region: "46", district: "순천시" })).toEqual(["suncheon"]);
+    });
+  });
+
   it("미성년자 전용 공고는 나이대 조건이 있을 때 빠지고, 없을 때는 보입니다", () => {
     const notices = [noticeOf({ id: "kids", minorsOnly: true }), noticeOf({ id: "all" })];
 

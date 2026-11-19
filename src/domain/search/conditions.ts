@@ -1,5 +1,5 @@
 // 검색 조건 (해석 칩)과 URL 주소 사이의 변환 (기획서 7-1장 저장과 공유)
-// 예: /?region=11&age=youth&biz=retail&topic=facility. 입력 문장은 URL에 넣지 않는다
+// 예: /?region=11&gu=마포구&age=youth&biz=retail&topic=facility. 입력 문장은 URL에 넣지 않는다
 import {
   AGE_GROUPS,
   INDUSTRIES,
@@ -18,15 +18,18 @@ import {
   type RegionCode,
   type Topic,
 } from "./conditionValues";
+import { isDistrictOf } from "./districts";
 
 export interface SearchConditions {
   region: RegionCode | null; // null = 전국
+  // 시·도 아래 시·군·구 ("마포구"). 문장에 적었을 때만 정한다. 다른 시·군·구 기관의 공고를 뺀다
+  district: string | null;
   age: AgeGroup | null;
   biz: Industry | null;
   topics: Topic[]; // 주제끼리는 "또는"
 }
 
-export const EMPTY_CONDITIONS: SearchConditions = { region: null, age: null, biz: null, topics: [] };
+export const EMPTY_CONDITIONS: SearchConditions = { region: null, district: null, age: null, biz: null, topics: [] };
 
 export function hasConditions(conditions: SearchConditions): boolean {
   return (
@@ -36,7 +39,8 @@ export function hasConditions(conditions: SearchConditions): boolean {
 
 // 칩 하나 = 조건 하나. 지역·나이대·하는 일은 하나만, 관심 주제는 여러 개
 export type ConditionChip =
-  | { kind: "region"; value: RegionCode }
+  // district: 문자열이면 그 시·군·구로, null이면 시·군·구를 비우고, 없으면 지금 시·군·구를 (그 시·도에 있을 때) 남긴다
+  | { kind: "region"; value: RegionCode; district?: string | null }
   | { kind: "age"; value: AgeGroup }
   | { kind: "biz"; value: Industry }
   | { kind: "topic"; value: Topic };
@@ -50,7 +54,7 @@ export const CHIP_KIND_LABEL: Record<ConditionChip["kind"], string> = {
 };
 
 export function chipLabel(chip: ConditionChip): string {
-  if (chip.kind === "region") return regionLabel(chip.value);
+  if (chip.kind === "region") return chip.district ? `${regionLabel(chip.value)} ${chip.district}` : regionLabel(chip.value);
   if (chip.kind === "age") return ageLabel(chip.value);
   if (chip.kind === "biz") return industryLabel(chip.value);
   return topicLabel(chip.value);
@@ -59,7 +63,9 @@ export function chipLabel(chip: ConditionChip): string {
 // 칩 순서: 지역 → 나이대 → 하는 일 → 관심 주제
 export function toChips(conditions: SearchConditions): ConditionChip[] {
   const chips: ConditionChip[] = [];
-  if (conditions.region) chips.push({ kind: "region", value: conditions.region });
+  if (conditions.region) {
+    chips.push({ kind: "region", value: conditions.region, ...(conditions.district ? { district: conditions.district } : {}) });
+  }
   if (conditions.age) chips.push({ kind: "age", value: conditions.age });
   if (conditions.biz) chips.push({ kind: "biz", value: conditions.biz });
   for (const topic of conditions.topics) chips.push({ kind: "topic", value: topic });
@@ -86,6 +92,7 @@ export function toggleChip(conditions: SearchConditions, chip: ConditionChip): S
 
 export function withoutChip(conditions: SearchConditions, chip: ConditionChip): SearchConditions {
   if (chip.kind === "topic") return { ...conditions, topics: conditions.topics.filter((t) => t !== chip.value) };
+  if (chip.kind === "region") return { ...conditions, region: null, district: null };
   return { ...conditions, [chip.kind]: null };
 }
 
@@ -96,6 +103,11 @@ export function withChip(conditions: SearchConditions, chip: ConditionChip): Sea
       ? conditions
       : { ...conditions, topics: [...conditions.topics, chip.value] };
   }
+  // 다른 시·도로 바꾸면 그 시·도에도 같은 이름이 있을 때만 시·군·구를 남긴다 (지역 후보 고르기: 중구 서울 → 부산)
+  if (chip.kind === "region") {
+    const district = chip.district !== undefined ? chip.district : conditions.district;
+    return { ...conditions, region: chip.value, district: isDistrictOf(chip.value, district) ? district : null };
+  }
   return { ...conditions, [chip.kind]: chip.value };
 }
 
@@ -105,9 +117,12 @@ export function conditionsFromParams(params: URLSearchParams): SearchConditions 
   const age = params.get("age");
   const biz = params.get("biz");
   const topics = (params.get("topic") ?? "").split(",").filter(isTopic);
+  const district = params.get("gu");
+  const validRegion = isRegionCode(region) ? region : null;
 
   return {
-    region: isRegionCode(region) ? region : null,
+    region: validRegion,
+    district: validRegion && isDistrictOf(validRegion, district) ? district : null,
     age: isAgeGroup(age) ? age : null,
     biz: isIndustry(biz) ? biz : null,
     topics: [...new Set(topics)],
@@ -117,6 +132,7 @@ export function conditionsFromParams(params: URLSearchParams): SearchConditions 
 export function conditionsToParams(conditions: SearchConditions): URLSearchParams {
   const params = new URLSearchParams();
   if (conditions.region) params.set("region", conditions.region);
+  if (conditions.region && conditions.district) params.set("gu", conditions.district);
   if (conditions.age) params.set("age", conditions.age);
   if (conditions.biz) params.set("biz", conditions.biz);
   if (conditions.topics.length > 0) params.set("topic", conditions.topics.join(","));

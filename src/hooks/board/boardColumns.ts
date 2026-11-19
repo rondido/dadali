@@ -49,8 +49,14 @@ export function toBoardColumns(matches: NoticeMatch[], today: IsoDate): BoardCol
     title,
     cards: withStatus
       .filter(({ status }) => statuses.includes(status))
-      // 조건과 태그로 분명히 맞은 공고가 먼저, 같으면 열의 원래 순서(시작·마감 빠른 순, 이름순)
-      .sort((a, b) => (b.match.strength ?? 0) - (a.match.strength ?? 0) || compare(a.match.notice, b.match.notice))
+      // 조건과 태그로 분명히 맞은 공고가 먼저, 그다음 시·도 전체 공고가 시·군·구 공고보다 먼저,
+      // 같으면 열의 원래 순서(시작·마감 빠른 순, 이름순)
+      .sort(
+        (a, b) =>
+          (b.match.strength ?? 0) - (a.match.strength ?? 0) ||
+          Number(a.match.local ?? false) - Number(b.match.local ?? false) ||
+          compare(a.match.notice, b.match.notice),
+      )
       .map(({ match }) => boardCardOf(match, today)),
   }));
 }

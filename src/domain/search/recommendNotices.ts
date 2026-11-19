@@ -4,6 +4,7 @@ import type { IsoDate } from "@/domain/notice/notice";
 import { noticeStatusOf, type NoticeStatus } from "@/domain/notice/noticeStatus";
 import { ageLabel, industryLabel, regionLabel, topicLabel } from "./conditionValues";
 import type { SearchConditions } from "./conditions";
+import { orgDistrictOf } from "./districts";
 import type { NoticeMatch } from "./matchNotices";
 
 export const RECOMMEND_COUNT = 3;
@@ -13,7 +14,12 @@ const STATUS_ORDER: Record<Exclude<NoticeStatus, "closed">, number> = { closing:
 
 function explicitReasons({ notice }: NoticeMatch, conditions: SearchConditions): string[] {
   const reasons: string[] = [];
-  if (conditions.region && notice.regionCodes.includes(conditions.region)) reasons.push(regionLabel(conditions.region));
+  const org = conditions.district ? orgDistrictOf(notice.org) : null;
+  if (conditions.region && org?.name === conditions.district && org.regions.includes(conditions.region)) {
+    reasons.push(conditions.district!);
+  } else if (conditions.region && notice.regionCodes.includes(conditions.region)) {
+    reasons.push(regionLabel(conditions.region));
+  }
   if (conditions.age && notice.ageGroups.includes(conditions.age)) reasons.push(ageLabel(conditions.age));
   if (conditions.biz && notice.industries.includes(conditions.biz)) reasons.push(industryLabel(conditions.biz));
   for (const topic of conditions.topics) {

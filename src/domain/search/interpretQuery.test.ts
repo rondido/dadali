@@ -22,7 +22,7 @@ describe("interpretQuery", () => {
     const result = interpretQuery("서울에서 카페 하는 32살인데 가게 인테리어 지원 있나요?", DICTIONARY);
 
     expect(result).toEqual({
-      conditions: { region: "11", age: "youth", biz: "retail", topics: ["facility"] },
+      conditions: { region: "11", district: null, age: "youth", biz: "retail", topics: ["facility"] },
       regionChoices: [],
       unknownTerms: [],
     });
@@ -31,7 +31,7 @@ describe("interpretQuery", () => {
   it("짧은 문장은 찾은 조건만 채우고 나머지는 비워 둡니다", () => {
     const result = interpretQuery("창업 지원금", DICTIONARY);
 
-    expect(result.conditions).toEqual({ region: null, age: null, biz: null, topics: ["startup"] });
+    expect(result.conditions).toEqual({ region: null, district: null, age: null, biz: null, topics: ["startup"] });
   });
 
   it("동 이름은 그 동이 속한 시·도로 바꿉니다", () => {

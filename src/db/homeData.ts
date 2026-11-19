@@ -5,6 +5,7 @@ import type { IsoDate, Notice } from "@/domain/notice/notice";
 import { sourceInfoOf } from "@/domain/notice/sources";
 import { isAgeGroup, isIndustry, isTopic } from "@/domain/search/conditionValues";
 import { hasConditions, type SearchConditions } from "@/domain/search/conditions";
+import { orgPrefixesOf } from "@/domain/search/districts";
 
 export interface HomeData {
   notices: Notice[];
@@ -33,7 +34,7 @@ export async function loadHomeData(
 
   const { db } = await import("./client");
   const { notice, syncLog } = await import("./schema");
-  const { and, arrayContains, arrayOverlaps, asc, count, desc, eq, gte, ilike, isNull, max, ne, or, sql } = await import(
+  const { and, arrayContains, arrayOverlaps, asc, count, desc, eq, gte, ilike, inArray, isNull, max, ne, or, sql } = await import(
     "drizzle-orm"
   );
 
@@ -62,8 +63,20 @@ export async function loadHomeData(
   // 비어 있는 대상 = 전체 대상 (matchNotices와 같은 규칙)
   const allOr = (column: TargetColumn, value: string | null) =>
     value === null ? undefined : or(sql`cardinality(${column}) = 0`, arrayContains(column, [value]));
+  // 기관명이 찾는 시·도 안의 시·군·구인지 ("서울특별시 마포구"). matchNotices·orgDistrictOf와 같은 규칙
+  const orgSecond = sql`split_part(${notice.org}, ' ', 2)`;
+  const inSidoDistrict =
+    conditions.region === null
+      ? undefined
+      : and(inArray(sql`split_part(${notice.org}, ' ', 1)`, orgPrefixesOf(conditions.region)), sql`${orgSecond} ~ '[시군구]$'`);
+  const sameDistrict =
+    inSidoDistrict && conditions.district !== null ? and(inSidoDistrict, sql`${orgSecond} = ${conditions.district}`) : undefined;
   const matchesConditions = and(
     allOr(notice.regionCodes, conditions.region),
+    // 시·군·구를 정하면 같은 시·도의 다른 시·군·구 기관 공고는 뺀다
+    inSidoDistrict && conditions.district !== null
+      ? sql`not (${inSidoDistrict} and ${orgSecond} <> ${conditions.district})`
+      : undefined,
     allOr(notice.ageGroups, conditions.age),
     conditions.age === null ? undefined : eq(notice.minorsOnly, false),
     allOr(notice.industries, conditions.biz),
@@ -84,19 +97,24 @@ export async function loadHomeData(
   const strength = sql.join(
     [
       hit(notice.regionCodes, conditions.region),
+      sameDistrict ? sql`(case when ${sameDistrict} then 1 else 0 end)` : sql`0`,
       hit(notice.ageGroups, conditions.age),
       hit(notice.industries, conditions.biz),
       ...conditions.topics.map((topic) => sql`(case when ${topic} = any(${notice.topics}) then 1 else 0 end)`),
     ],
     sql` + `,
   );
-  // 분명히 맞은 혜택을 먼저, 그다음 지역을 콕 집은 혜택, 이름순
+  // 시·도로만 찾을 때 시·군·구 기관 공고는 시·도 전체 공고 뒤로 (matchNotices의 local)
+  // 정렬에 상수를 넣으면 Postgres가 열 번호로 읽으므로, 필요할 때만 넣는다
+  const localLast =
+    inSidoDistrict && conditions.district === null ? [asc(sql`(case when ${inSidoDistrict} then 1 else 0 end)`)] : [];
+  // 분명히 맞은 혜택을 먼저, 그다음 시·도 전체 혜택, 지역을 콕 집은 혜택, 이름순
   const alwaysRowsOf = (where: ReturnType<typeof and>) =>
     db
       .select(columns)
       .from(notice)
       .where(where)
-      .orderBy(desc(strength), desc(sql`cardinality(${notice.regionCodes})`), asc(notice.title))
+      .orderBy(desc(strength), ...localLast, desc(sql`cardinality(${notice.regionCodes})`), asc(notice.title))
       .limit(ALWAYS_LIMIT);
   const countOf = async (where: ReturnType<typeof and>) => (await db.select({ n: count() }).from(notice).where(where))[0].n;
 

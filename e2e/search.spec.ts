@@ -1,4 +1,4 @@
-// 자유 입력 검색 (기획서 P01·P02, F01~F04, F07, F09). src/data/sampleNotices.ts와 sampleDictionary.ts를 기준으로 검증합니다.
+// 자유 입력 검색 (기획서 P01·P02, F01~F04, F07, F09). src/data/sampleNotices.ts와 dictionary.ts를 기준으로 검증합니다.
 import { expect, test, type Page } from "@playwright/test";
 
 const SCENARIO = "서울에서 카페 하는 32살인데 가게 인테리어 지원 있나요?";
@@ -163,6 +163,30 @@ test("+ 조건 추가로 지역을 직접 고를 수 있습니다", async ({ pag
   await page.keyboard.press("Escape");
   await expect(dialog).toHaveCount(0);
   await expect(page.getByRole("button", { name: "+ 조건 추가" })).toBeFocused();
+});
+
+test("+ 조건 추가에서 시·도를 고르면 그 시·군·구도 고를 수 있습니다", async ({ page }) => {
+  await searchFor(page, "창업 지원금");
+  await page.getByRole("button", { name: "+ 조건 추가" }).click();
+  const dialog = page.getByRole("dialog", { name: "조건 추가" });
+
+  // 시·도를 고르기 전에는 시·군·구 줄이 없습니다
+  await expect(dialog.getByRole("list", { name: "서울 시·군·구" })).toHaveCount(0);
+  await dialog.getByRole("button", { name: "서울", exact: true }).click();
+  const districts = dialog.getByRole("list", { name: "서울 시·군·구" });
+  await districts.getByRole("button", { name: "마포구" }).click();
+
+  await expect(chips(page).first()).toHaveText(/지역\s*서울 마포구/);
+
+  // 다시 누르면 시·군·구만 빼고 시·도는 남깁니다
+  await districts.getByRole("button", { name: "마포구" }).click();
+  await expect(chips(page).first()).not.toHaveText(/마포구/);
+  await expect(chips(page).first()).toHaveText(/지역\s*서울/);
+
+  // 창을 닫으면 주소에 시·군·구가 담깁니다 (창이 열려 있는 동안은 요청을 모아 둡니다)
+  await districts.getByRole("button", { name: "마포구" }).click();
+  await page.keyboard.press("Escape");
+  await expect(page).toHaveURL(/gu=%EB%A7%88%ED%8F%AC%EA%B5%AC/);
 });
 
 test.describe("조건으로 바꾸지 못한 단어", () => {
