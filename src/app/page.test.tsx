@@ -1,7 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import HomeView from "@/components/home/HomeView";
-import { SAMPLE_DICTIONARY } from "@/data/sampleDictionary";
+import { DICTIONARY } from "@/data/dictionary";
 import { SAMPLE_NOTICES, SAMPLE_SYNCED_AT } from "@/data/sampleNotices";
 
 // Next.js 라우터를 모킹합니다: jsdom에는 App Router가 없어 useRouter·useSearchParams를 그대로 쓸 수 없기 때문
@@ -16,7 +16,7 @@ function renderHome(isSample = false) {
   render(
     <HomeView
       notices={SAMPLE_NOTICES}
-      dictionary={SAMPLE_DICTIONARY}
+      dictionary={DICTIONARY}
       syncedAt={SAMPLE_SYNCED_AT}
       alwaysNote={null}
       isSample={isSample}

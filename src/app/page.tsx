@@ -1,5 +1,5 @@
 import HomeView from "@/components/home/HomeView";
-import { SAMPLE_DICTIONARY } from "@/data/sampleDictionary";
+import { DICTIONARY } from "@/data/dictionary";
 import { loadHomeData } from "@/db/homeData";
 import { toSeoulDate } from "@/domain/date/seoulDate";
 import { conditionsFromParams } from "@/domain/search/conditions";
@@ -20,6 +20,6 @@ export default async function Home({ searchParams }: { searchParams: SearchParam
     toSeoulDate(new Date()),
   );
 
-  // 해석 사전은 아직 샘플이다. 법정동코드·표준산업분류로 Dictionary 테이블을 채우면 DB에서 읽는다
-  return <HomeView {...data} dictionary={SAMPLE_DICTIONARY} />;
+  // 해석 사전은 코드에 둔다 (src/data/dictionary.ts). 자주 바꾸게 되면 DB 테이블로 옮긴다
+  return <HomeView {...data} dictionary={DICTIONARY} />;
 }

@@ -1,5 +1,5 @@
 // 자유 입력 문장을 검색 조건으로 바꾸는 사전 규칙 해석 (기획서 5-1장)
-// 사전은 인자로 받는다: 지금은 샘플 사전, 이후 Dictionary 테이블(법정동코드·표준산업분류)로 바꾼다
+// 사전은 인자로 받는다 (src/data/dictionary.ts: 시·도와 전국 시·군·구, 자주 쓰는 말과 비슷한 말)
 import { isAgeGroup, isIndustry, isRegionCode, isTopic, type AgeGroup, type RegionCode } from "./conditionValues";
 import { EMPTY_CONDITIONS, type SearchConditions } from "./conditions";
 
@@ -9,6 +9,8 @@ export interface DictionaryEntry {
   value: string;
   // 같은 단어가 가리킬 수 있는 다른 지역 (예: 광주 → 광주광역시 / 경기 광주시)
   ambiguousWith?: string[];
+  // 시·군·구 이름이나 동네 이름이면 그 시·군·구 ("마포구"). 후보 시·도 어디서든 같은 이름이다
+  district?: string;
 }
 
 export interface Interpretation {
@@ -77,8 +79,25 @@ export function interpretQuery(text: string, dictionary: DictionaryEntry[]): Int
 
   const addRegion = (entry: DictionaryEntry) => {
     const candidates = [entry.value, ...(entry.ambiguousWith ?? [])].filter(isRegionCode);
+    // "서울 마포구", "부산 중구"처럼 이미 찾은 시·도 안의 시·군·구면 그 시·도에 시·군·구만 더한다
+    if (conditions.region !== null && entry.district && conditions.district === null) {
+      if (candidates.includes(conditions.region)) {
+        conditions.district = entry.district;
+        return;
+      }
+    }
+    // "마포구 서울"처럼 시·군·구 뒤에 그 시·도가 오면 더할 것이 없다
+    if (conditions.region !== null && !entry.district && candidates.includes(conditions.region)) return;
+    // "중구 부산"처럼 여러 시·도에 있는 시·군·구 뒤에 시·도가 오면 그 시·도로 정한다
+    const chosen = candidates[0];
+    if (conditions.district && !entry.district && chosen && regionChoices.includes(chosen)) {
+      conditions.region = chosen;
+      regionChoices.length = 0;
+      return;
+    }
     if (conditions.region === null) {
       conditions.region = candidates[0] ?? null;
+      conditions.district = entry.district ?? null;
       // 뜻이 둘인 지명이면 첫 번째로 찾되, 나머지를 고를 수 있게 한다
       if (candidates.length > 1) regionChoices.push(...candidates);
       return;

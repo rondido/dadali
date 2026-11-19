@@ -1,8 +1,10 @@
 // 검색 조건으로 공고를 거르고, 카드에 붙일 "왜 걸렸는지" 태그를 만든다 (기획서 5-1장 칩 규칙)
 // 조건 사이는 "그리고", 관심 주제끼리는 "또는". 대상·지역·업종이 비어 있는 공고는 전체 대상으로 보고 통과시킨다
+// 시·군·구를 정하면 같은 시·도의 다른 시·군·구 기관 공고(대개 그 주민만 대상)를 뺀다. 시·군·구는 기관명에서 읽는다
 import type { Notice } from "@/domain/notice/notice";
 import { ageLabel, industryLabel, regionLabel, topicLabel } from "./conditionValues";
 import type { SearchConditions } from "./conditions";
+import { orgDistrictOf } from "./districts";
 
 export interface NoticeMatch {
   notice: Notice;
@@ -10,6 +12,8 @@ export interface NoticeMatch {
   // 조건과 태그로 분명히 맞은 개수 (지역·나이대·하는 일 각 1, 맞은 주제마다 1). 대상이 비어 통과한 것은 세지 않는다
   // 보드 열 안에서 분명히 맞은 공고를 먼저 보여주는 데 쓴다. 관심·최근 공고처럼 검색과 무관한 목록은 없다(0)
   strength?: number;
+  // 시·도로만 찾았을 때 시·군·구 기관의 공고 (시·도 전체·전국 공고 뒤에 보여준다)
+  local?: boolean;
 }
 
 export interface MatchResult {
@@ -25,8 +29,19 @@ function checkOne(selected: string | null, values: string[], label: (v: string) 
   return values.includes(selected) ? [label(selected)] : null;
 }
 
+// 공고를 낸 기관이 찾는 시·도 안의 시·군·구인지: 같은 시·군·구면 "same", 다른 시·군·구면 "other", 아니면 null
+function districtRelation(notice: Notice, conditions: SearchConditions): "same" | "other" | null {
+  if (conditions.region === null) return null;
+  const org = orgDistrictOf(notice.org);
+  if (!org || !org.regions.includes(conditions.region)) return null;
+  return org.name === conditions.district ? "same" : "other";
+}
+
 function matchConditions(notice: Notice, conditions: SearchConditions): string[] | null {
-  const region = checkOne(conditions.region, notice.regionCodes, regionLabel, "전국");
+  const relation = districtRelation(notice, conditions);
+  if (conditions.district !== null && relation === "other") return null;
+  const region =
+    relation === "same" ? [conditions.district!] : checkOne(conditions.region, notice.regionCodes, regionLabel, "전국");
   // 미성년자 전용 공고는 나이대(청년·중장년·어르신)로 찾을 때 대상이 아니다
   if (conditions.age !== null && notice.minorsOnly) return null;
   const age = checkOne(conditions.age, notice.ageGroups, ageLabel);
@@ -44,6 +59,7 @@ export function strengthOf(notice: Notice, conditions: SearchConditions): number
   const hits = (selected: string | null, values: string[]) => (selected !== null && values.includes(selected) ? 1 : 0);
   return (
     hits(conditions.region, notice.regionCodes) +
+    (conditions.district !== null && districtRelation(notice, conditions) === "same" ? 1 : 0) +
     hits(conditions.age, notice.ageGroups) +
     hits(conditions.biz, notice.industries) +
     conditions.topics.filter((t) => notice.topics.includes(t)).length
@@ -57,7 +73,9 @@ function containsKeyword(notice: Notice, keyword: string): boolean {
 export function matchNotices(notices: Notice[], conditions: SearchConditions, keywords: string[] = []): MatchResult {
   const matches = notices.flatMap((notice) => {
     const reasons = matchConditions(notice, conditions);
-    return reasons ? [{ notice, reasons, strength: strengthOf(notice, conditions) }] : [];
+    if (!reasons) return [];
+    const local = conditions.district === null && districtRelation(notice, conditions) === "other";
+    return [{ notice, reasons, strength: strengthOf(notice, conditions), ...(local ? { local } : {}) }];
   });
 
   // 어느 공고에도 없는 단어로 결과를 0건으로 만들지 않도록, 한 건이라도 걸리는 단어만 쓴다

@@ -14,6 +14,7 @@ import {
   type SearchConditions,
 } from "@/domain/search/conditions";
 import DetailFields from "@/components/search/DetailFields";
+import DistrictOptions from "@/components/search/DistrictOptions";
 import { detailCount, hasDetails, type DetailFilters } from "@/domain/search/detailFilters";
 import { afterLeave } from "@/hooks/ui/motion";
 import { useFocusTrap } from "@/hooks/ui/useFocusTrap";
@@ -136,7 +137,12 @@ export default function AddCondition({ conditions, onAdd, onRemove, onOpenChange
                     <ul className="flex flex-wrap gap-2">
                       {field.options.map((option) => {
                         // 값은 CONDITION_FIELDS의 options 중 하나이므로 그 종류의 칩이 된다
-                        const chip = { kind: field.kind, value: option.value } as ConditionChip;
+                        // 시·도를 직접 고르면 시·군·구는 비운다 (아래 시·군·구 줄에서 다시 고른다)
+                        const chip = (
+                          field.kind === "region"
+                            ? { kind: field.kind, value: option.value, district: null }
+                            : { kind: field.kind, value: option.value }
+                        ) as ConditionChip;
                         const pressed = hasChip(conditions, chip);
                         return (
                           <li key={option.value}>
@@ -154,6 +160,12 @@ export default function AddCondition({ conditions, onAdd, onRemove, onOpenChange
                         );
                       })}
                     </ul>
+                    {field.kind === "region" && conditions.region && (
+                      <DistrictOptions
+                        conditions={conditions}
+                        onPick={(district) => onAdd({ kind: "region", value: conditions.region!, district })}
+                      />
+                    )}
                   </fieldset>
                 ))}
 

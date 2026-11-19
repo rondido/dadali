@@ -11,10 +11,12 @@ import {
   hasChip,
   hasConditions,
   toggleChip,
+  withChip,
   type ConditionChip,
   type SearchConditions,
 } from "@/domain/search/conditions";
 import { matchNotices } from "@/domain/search/matchNotices";
+import DistrictOptions from "@/components/search/DistrictOptions";
 
 interface ConditionPickerProps {
   notices: Notice[];
@@ -38,7 +40,12 @@ export default function ConditionPicker({ notices, today, onApply }: ConditionPi
           <ul className="flex flex-wrap gap-2">
             {field.options.map((option) => {
               // 값은 CONDITION_FIELDS의 options 중 하나이므로 그 종류의 칩이 된다
-              const chip = { kind: field.kind, value: option.value } as ConditionChip;
+              // 시·도를 직접 고르면 시·군·구는 비운다 (아래 시·군·구 줄에서 다시 고른다)
+              const chip = (
+                field.kind === "region"
+                  ? { kind: field.kind, value: option.value, district: null }
+                  : { kind: field.kind, value: option.value }
+              ) as ConditionChip;
               const pressed = hasChip(selected, chip);
               return (
                 <li key={option.value}>
@@ -58,6 +65,16 @@ export default function ConditionPicker({ notices, today, onApply }: ConditionPi
               );
             })}
           </ul>
+          {field.kind === "region" && selected.region && (
+            <DistrictOptions
+              conditions={selected}
+              onPick={(district) =>
+                setSelected((current) =>
+                  current.region ? withChip(current, { kind: "region", value: current.region, district }) : current,
+                )
+              }
+            />
+          )}
         </fieldset>
       ))}
 

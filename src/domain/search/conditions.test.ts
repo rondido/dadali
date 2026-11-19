@@ -12,7 +12,32 @@ import {
   type SearchConditions,
 } from "./conditions";
 
-const FULL: SearchConditions = { region: "11", age: "youth", biz: "retail", topics: ["facility", "fund"] };
+const FULL: SearchConditions = { region: "11", district: null, age: "youth", biz: "retail", topics: ["facility", "fund"] };
+
+describe("시·군·구 조건", () => {
+  const mapo: SearchConditions = { ...EMPTY_CONDITIONS, region: "11", district: "마포구" };
+
+  it("주소에 gu로 담고, 그 시·도에 없는 시·군·구는 버립니다", () => {
+    expect(conditionsToParams(mapo).get("gu")).toBe("마포구");
+    expect(conditionsFromParams(new URLSearchParams("region=11&gu=마포구")).district).toBe("마포구");
+    expect(conditionsFromParams(new URLSearchParams("region=26&gu=마포구")).district).toBeNull();
+    expect(conditionsFromParams(new URLSearchParams("gu=마포구")).district).toBeNull();
+  });
+
+  it("지역 칩에 시·군·구를 함께 보여주고, 빼면 둘 다 뺍니다", () => {
+    const [chip] = toChips(mapo);
+
+    expect(chipLabel(chip)).toBe("서울 마포구");
+    expect(withoutChip(mapo, chip)).toMatchObject({ region: null, district: null });
+  });
+
+  it("다른 시·도로 바꾸면 그 시·도에 같은 이름이 있을 때만 시·군·구를 남깁니다", () => {
+    const jung: SearchConditions = { ...EMPTY_CONDITIONS, region: "11", district: "중구" };
+
+    expect(withChip(jung, { kind: "region", value: "26" })).toMatchObject({ region: "26", district: "중구" });
+    expect(withChip(mapo, { kind: "region", value: "26" })).toMatchObject({ region: "26", district: null });
+  });
+});
 
 describe("toggleChip", () => {
   it("고르지 않은 지역을 누르면 그 지역을 고릅니다", () => {
@@ -52,7 +77,7 @@ describe("conditionsToParams / conditionsFromParams", () => {
   it("알 수 없는 값은 버리고 읽습니다", () => {
     const params = new URLSearchParams("region=99&age=kid&biz=retail&topic=facility,unknown");
 
-    expect(conditionsFromParams(params)).toEqual({ region: null, age: null, biz: "retail", topics: ["facility"] });
+    expect(conditionsFromParams(params)).toEqual({ region: null, district: null, age: null, biz: "retail", topics: ["facility"] });
   });
 });
 
