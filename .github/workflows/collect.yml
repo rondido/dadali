@@ -1,0 +1,48 @@
+# 공고 수집 (기획서 13장): 매주 월·수·금요일 새벽 5시 (한국 시간)
+# 필요한 GitHub Secrets: DATABASE_URL(Supabase Session pooler 주소), DATA_GO_KR_KEY(공공데이터포털 인증키)
+#                        ANTHROPIC_API_KEY(AI 태깅용, 없으면 태깅 단계만 건너뜀)
+# 실패하면 GitHub가 저장소 관리자에게 메일로 알린다 (Actions 실패 알림)
+name: 공고 수집
+
+on:
+  schedule:
+    # cron은 UTC 기준이라 하루 앞선 요일로 적는다: 일·화·목 20:00 UTC = 월·수·금 05:00 KST
+    - cron: "0 20 * * 0,2,4"
+  workflow_dispatch: # Actions 화면에서 직접 실행
+
+permissions:
+  contents: read
+
+concurrency:
+  group: collect
+  cancel-in-progress: false
+
+jobs:
+  collect:
+    name: K-Startup · 행안부 혜택 수집
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: 수집
+        run: npm run collect
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          DATA_GO_KR_KEY: ${{ secrets.DATA_GO_KR_KEY }}
+
+      # 새로 들어왔거나 내용이 바뀐 공고만 AI로 태깅한다 (scripts/tag.ts)
+      # 한 번에 100건까지만: 비용이 튀지 않게 하고, 남은 건 다음 수집 때 이어서 한다 (100건이 모두 Opus여도 약 $0.4)
+      # ANTHROPIC_API_KEY 시크릿이 없으면 스크립트가 태깅을 건너뛰고 성공으로 끝낸다
+      - name: AI 태깅
+        run: npm run tag -- --yes --limit 100
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}

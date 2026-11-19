@@ -1,6 +1,6 @@
-# 다달이
+# 혜택톡톡
 
-이번 달 정부지원, 한눈에. 정부·공공 지원사업 공고를 마감일 중심 달력으로 보여주고 공식 공고로 연결하는 웹 서비스입니다.
+이번 달 정부지원, 한눈에. 내 상황을 적으면 조건에 맞을 수 있는 정부·공공 지원사업을 진행 예정·진행 중·상시로 나눠 보여주고 공식 공고로 연결하는 웹 서비스입니다.
 
 ## 기술 스택
 
@@ -33,14 +33,17 @@ npm run explore
 
 ## 2단계: DB 만들기
 
-1. Supabase 프로젝트를 만들고 Connection string(Transaction pooler)을 `.env.local`의 `DATABASE_URL`에 넣습니다.
-2. 테이블을 만듭니다.
+1. Supabase 프로젝트를 만들고 Connect > Connection String에서 Session pooler 주소를 복사해 `.env.local`의 `DATABASE_URL`에 넣습니다. 비밀번호는 대괄호 없이 넣고, 특수문자는 URL 인코딩합니다(예: `@` → `%40`).
+2. Supabase > SQL Editor에서 `supabase/extensions.sql`을 실행합니다. 검색 색인에 쓰는 pg_trgm 확장이 설치됩니다.
+3. 테이블을 만듭니다.
 
 ```bash
 npm run db:push
 ```
 
-3. Supabase > SQL Editor에서 `supabase/rls.sql`을 실행합니다. 읽기 전용 정책과 분류 기본값이 들어갑니다.
+4. SQL Editor에서 `supabase/rls.sql`, `supabase/seed.sql`을 차례로 실행합니다. 읽기 전용 보안 정책과 기본 데이터(분류 4개, 수록 사이트 10곳)가 들어갑니다. 두 파일 모두 여러 번 실행해도 됩니다.
+
+주의: `npm run db:push`는 이미 있는 검사 규칙(CHECK)의 내용이 바뀐 것을 반영하지 못합니다. 규칙을 고쳤다면 `drizzle/`에 생성된 SQL을 보고 SQL Editor에서 직접 다시 만듭니다.
 
 ## 폴더 구조
 
@@ -72,4 +75,4 @@ drizzle/            스키마에서 만든 SQL (자동 생성)
 5. 공고 상세, 모바일, 사이트 소개
 6. 출시 준비: 검색 노출, 고지·출처 표시, 배포
 
-정확한 자격과 일정은 각 공식 사이트 공고를 따릅니다. 다달이는 정부 공식 서비스가 아닙니다.
+정확한 자격과 일정은 각 공식 사이트 공고를 따릅니다. 혜택톡톡은 정부 공식 서비스가 아닙니다.
