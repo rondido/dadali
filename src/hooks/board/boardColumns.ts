@@ -28,7 +28,7 @@ const byTitle: Compare = (a, b) => a.title.localeCompare(b.title, "ko");
 const byStart: Compare = (a, b) => (a.applyStart ?? "").localeCompare(b.applyStart ?? "") || byTitle(a, b);
 const byEnd: Compare = (a, b) => (a.applyEnd ?? "9999").localeCompare(b.applyEnd ?? "9999") || byTitle(a, b);
 
-// 열 순서, 각 열에 들어가는 접수 상태, 열 안의 정렬 기준
+// 열 순서, 각 열에 들어가는 접수 상태, 열 안의 정렬 기준 (검색 조건과 분명히 맞은 정도 다음에 쓴다)
 const COLUMNS: { key: BoardColumnKey; title: string; statuses: NoticeStatus[]; compare: Compare }[] = [
   { key: "upcoming", title: "접수 예정", statuses: ["upcoming"], compare: byStart },
   { key: "ongoing", title: "접수 중", statuses: ["open", "closing"], compare: byEnd },
@@ -49,7 +49,8 @@ export function toBoardColumns(matches: NoticeMatch[], today: IsoDate): BoardCol
     title,
     cards: withStatus
       .filter(({ status }) => statuses.includes(status))
-      .sort((a, b) => compare(a.match.notice, b.match.notice))
+      // 조건과 태그로 분명히 맞은 공고가 먼저, 같으면 열의 원래 순서(시작·마감 빠른 순, 이름순)
+      .sort((a, b) => (b.match.strength ?? 0) - (a.match.strength ?? 0) || compare(a.match.notice, b.match.notice))
       .map(({ match }) => boardCardOf(match, today)),
   }));
 }
