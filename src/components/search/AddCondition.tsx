@@ -128,8 +128,8 @@ export default function AddCondition({ conditions, onAdd, onRemove, onOpenChange
           >
             {/* PC(1280px 이상)는 스크롤 없이 한 번에 보이도록 창을 넓히고(선택지 줄 수가 준다) 간격·버튼 높이를 줄이고,
                 높이 한도도 화면 높이에서 위쪽 머리만 뺀 만큼으로 늘린다 */}
-            <div className="flex max-h-[min(70dvh,44rem)] w-full flex-col overflow-hidden rounded-lg bg-surface shadow-2xl md:w-[44rem] xl:max-h-[calc(100dvh-11rem)] xl:w-[52rem]">
-              <div className="relative flex min-h-0 flex-1 flex-col gap-8 overflow-y-auto p-6 md:p-8 xl:gap-6 xl:p-7">
+            <div className="flex max-h-[min(70dvh,44rem)] w-full flex-col overflow-hidden rounded-lg bg-surface shadow-2xl md:w-[44rem] xl:max-h-[calc(100dvh-9rem)] xl:w-[52rem]">
+              <div className="relative flex min-h-0 flex-1 flex-col gap-8 overflow-y-auto p-6 md:p-8 xl:gap-5 xl:p-6">
                 {/* 제목은 두지 않는다: 연 버튼에 이미 "+ 조건 추가"라고 쓰여 있다 */}
                 {CONDITION_FIELDS.map((field) => (
                   <fieldset key={field.kind} className="flex flex-col gap-3">
@@ -150,7 +150,7 @@ export default function AddCondition({ conditions, onAdd, onRemove, onOpenChange
                               type="button"
                               aria-pressed={pressed}
                               onClick={() => (pressed ? onRemove(chip) : onAdd(chip))}
-                              className={`min-h-11 rounded-md px-4 text-[15px] transition-colors xl:min-h-9 xl:px-3.5 ${
+                              className={`min-h-11 rounded-md px-4 text-[15px] transition-colors xl:min-h-8 xl:px-3.5 ${
                                 pressed ? "bg-primary font-semibold text-on-primary" : "bg-ground text-ink hover:bg-primary-tint hover:text-primary"
                               }`}
                             >
@@ -190,7 +190,7 @@ export default function AddCondition({ conditions, onAdd, onRemove, onOpenChange
               </div>
 
               {/* 아래 고정 줄: 왼쪽 자세히(스크롤과 상관없이 늘 보인다), 오른쪽 완료 */}
-              <div className="flex shrink-0 items-center justify-between gap-3 px-6 pt-3 pb-6 md:px-8 xl:px-7 xl:pb-5">
+              <div className="flex shrink-0 items-center justify-between gap-3 px-6 pt-3 pb-6 md:px-8 xl:px-6 xl:pb-4">
                 {details && onDetailsChange ? (
                   <button
                     type="button"
