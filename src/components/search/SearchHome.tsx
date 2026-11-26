@@ -15,7 +15,7 @@ import ConditionPicker from "@/components/search/ConditionPicker";
 import SearchBox from "@/components/search/SearchBox";
 import StartScreen from "@/components/search/StartScreen";
 import { ListSkeleton, ResultsSkeleton, Skeleton, StartSkeleton } from "@/components/ui/Skeleton";
-import LogoMark from "@/components/ui/LogoMark";
+import LogoMark, { Wordmark } from "@/components/ui/LogoMark";
 import { useToast } from "@/components/ui/Toast";
 import type { Notice } from "@/domain/notice/notice";
 import { chipLabel, hasConditions, toChips, withoutChip, type ConditionChip } from "@/domain/search/conditions";
@@ -451,9 +451,17 @@ export default function SearchHome({
             <div className="flex flex-col items-center gap-3 pb-10 text-center">
               {/* 로고 마크 + 서비스명 (마크는 장식이라 화면 낭독기는 이름만 읽는다) */}
               <div className="flex items-center gap-3.5">
-                <LogoMark className="h-14 w-auto" />
-                {start && <h1 className="text-5xl font-extrabold tracking-tight">다람이</h1>}
-                {!start && <p className="text-5xl font-extrabold tracking-tight">다람이</p>}
+                <LogoMark sparkle className="h-16 w-auto" />
+                {start && (
+                  <h1 className="text-5xl font-extrabold tracking-tight">
+                    <Wordmark />
+                  </h1>
+                )}
+                {!start && (
+                  <p className="text-5xl font-extrabold tracking-tight">
+                    <Wordmark />
+                  </p>
+                )}
               </div>
               <p className="text-lg text-ink-2">이번 달 정부지원, 한눈에</p>
             </div>
@@ -464,24 +472,24 @@ export default function SearchHome({
             작은 로고는 흐름 밖(absolute)에 두고 왼쪽 여백만 부드럽게 열어 자리를 만든다. 로고가 끼어들며 검색창을 밀지 않게 하기 위함 */}
         <div
           className={`relative mx-auto flex w-full items-center transition-[max-width,padding] ${move} ${
-            start ? "max-w-2xl pl-0" : "max-w-full pl-36"
+            start ? "max-w-2xl pl-0" : "max-w-full pl-40"
           }`}
         >
           {/* 서비스 이름을 누르면 첫 화면으로. 저장된 조건이 남아 있으면 첫 화면에서 다시 보드로 넘어가므로 지우고 이동한다 */}
           {showResultsArea && (
             <Link
               href="/"
-              aria-label="다람이 첫 화면으로"
+              aria-label="혜택모아 첫 화면으로"
               onClick={(event) => {
                 event.preventDefault();
                 startOver();
               }}
-              className={`absolute top-1/2 left-0 flex -translate-y-1/2 items-center gap-2 rounded-sm text-xl font-extrabold tracking-tight hover:text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary ${
+              className={`absolute top-1/2 left-0 flex -translate-y-1/2 items-center gap-2 rounded-sm text-xl font-extrabold tracking-tight whitespace-nowrap hover:opacity-80 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary ${
                 resultsLeaving ? leavingClass : "motion-safe:animate-fade-in motion-safe:[animation-delay:300ms]"
               }`}
             >
               <LogoMark className="h-8 w-auto" />
-              다람이
+              <Wordmark />
             </Link>
           )}
           <SearchBox size={start ? "large" : "compact"} onSearch={search.search} />
