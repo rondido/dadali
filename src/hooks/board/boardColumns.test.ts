@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { Notice } from "@/domain/notice/notice";
-import { toBoardColumns, type BoardColumnKey } from "./boardColumns";
+import { sectionOrderOf, toBoardColumns, type BoardColumnKey } from "./boardColumns";
 
 // 테스트마다 달라지는 값만 넘기고, 나머지는 판단에 영향이 없는 기본값으로 채웁니다
 function noticeOf(overrides: Partial<Notice>): Notice {
@@ -41,6 +41,23 @@ function idsIn(notices: Notice[], key: BoardColumnKey): string[] {
   return cardsIn(notices, key).map((c) => c.match.notice.id);
 }
 
+describe("sectionOrderOf", () => {
+  const keysOf = (notices: Notice[]) => sectionOrderOf(columnsOf(notices)).map((c) => c.key);
+
+  it("조건에 맞는 상시 혜택이 있으면 상시를 맨 위에 둡니다 (많이 찾는 대표 혜택을 먼저 만나게)", () => {
+    const notices = [
+      noticeOf({ id: "open", applyStart: "2026-11-01", applyEnd: "2026-11-30" }),
+      noticeOf({ id: "always", isAlways: true }),
+    ];
+    expect(keysOf(notices)).toEqual(["always", "ongoing", "upcoming"]);
+  });
+
+  it("상시 혜택이 없으면 접수 중 → 접수 예정 → 상시 순서입니다", () => {
+    const notices = [noticeOf({ id: "open", applyStart: "2026-11-01", applyEnd: "2026-11-30" })];
+    expect(keysOf(notices)).toEqual(["ongoing", "upcoming", "always"]);
+  });
+});
+
 describe("toBoardColumns", () => {
   it("열 안에서는 조건과 분명히 맞은 공고가 먼저이고, 같으면 마감 빠른 순입니다", () => {
     const open = { applyStart: "2026-11-01" };
@@ -53,6 +70,20 @@ describe("toBoardColumns", () => {
 
     const ids = toBoardColumns(matches, TODAY).find((c) => c.key === "ongoing")!.cards.map((c) => c.match.notice.id);
     expect(ids).toEqual(["soon-explicit", "later-explicit", "one-hit", "soon-open"]);
+  });
+
+  it("마감순이면 맞은 정도와 상관없이 마감 빠른 순입니다 (시·군·구 공고도 뒤로 보내지 않습니다)", () => {
+    const open = { applyStart: "2026-11-01" };
+    const matches = [
+      { notice: noticeOf({ ...open, id: "later-explicit", applyEnd: "2026-11-30" }), reasons: [], strength: 2 },
+      { notice: noticeOf({ ...open, id: "soon-local", applyEnd: "2026-11-12" }), reasons: [], strength: 0, local: true },
+      { notice: noticeOf({ ...open, id: "middle", applyEnd: "2026-11-20" }), reasons: [], strength: 1 },
+    ];
+
+    const ids = toBoardColumns(matches, TODAY, "deadline")
+      .find((c) => c.key === "ongoing")!
+      .cards.map((c) => c.match.notice.id);
+    expect(ids).toEqual(["soon-local", "middle", "later-explicit"]);
   });
 
   it("접수 예정 → 접수 중 → 상시 순서로 세 열을 만듭니다", () => {
@@ -107,13 +138,33 @@ describe("toBoardColumns", () => {
       expect(idsIn(notices, "ongoing")).toEqual(["soon", "late"]);
     });
 
-    it("상시 열은 공고명 가나다순으로 정렬합니다", () => {
+    it("상시 열은 조회수가 같으면(없으면) 공고명 가나다순으로 정렬합니다", () => {
       const notices = [
         noticeOf({ id: "b", title: "나 공고", isAlways: true }),
         noticeOf({ id: "a", title: "가 공고", isAlways: true }),
       ];
 
       expect(idsIn(notices, "always")).toEqual(["a", "b"]);
+    });
+
+    it("상시 열은 많이 찾는 혜택(조회수가 높은 공고)부터 보여줍니다", () => {
+      const notices = [
+        noticeOf({ id: "local", title: "가 구청 청년 지원", isAlways: true, views: 1200 }),
+        noticeOf({ id: "national", title: "국민취업지원제도", isAlways: true, views: 1316182 }),
+        noticeOf({ id: "unknown", title: "나 공고", isAlways: true }),
+      ];
+
+      expect(idsIn(notices, "always")).toEqual(["national", "local", "unknown"]);
+    });
+
+    it("맞춤순에서는 조건과 분명히 맞은 상시 혜택이 조회수보다 먼저입니다", () => {
+      const matches = [
+        { notice: noticeOf({ id: "popular", isAlways: true, views: 5_000_000 }), reasons: [], strength: 0 },
+        { notice: noticeOf({ id: "matched", isAlways: true, views: 10 }), reasons: [], strength: 1 },
+      ];
+
+      const ids = toBoardColumns(matches, TODAY).find((c) => c.key === "always")!.cards.map((c) => c.match.notice.id);
+      expect(ids).toEqual(["matched", "popular"]);
     });
   });
 

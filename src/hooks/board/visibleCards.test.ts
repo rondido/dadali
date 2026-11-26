@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { BoardCard } from "./boardColumns";
-import { LOAD_MORE_STEP, visibleCards, visibleLimit } from "./visibleCards";
+import { ALWAYS_COLLAPSED_COUNT, LOAD_MORE_STEP, sectionLimit, visibleCards, visibleLimit } from "./visibleCards";
 
 // 판단에 쓰이는 공고 id만 채웁니다
 function cardsOf(count: number): BoardCard[] {
@@ -19,6 +19,23 @@ describe("visibleLimit", () => {
   it("더보기를 누를 때마다 20건씩 늘어납니다", () => {
     expect(visibleLimit(1)).toBe(5 + LOAD_MORE_STEP);
     expect(visibleLimit(2)).toBe(5 + LOAD_MORE_STEP * 2);
+  });
+});
+
+describe("sectionLimit", () => {
+  it("상시 구역은 펼치기 전까지 3건만 보여줍니다", () => {
+    expect(sectionLimit("always", 0, false)).toBe(ALWAYS_COLLAPSED_COUNT);
+    expect(ALWAYS_COLLAPSED_COUNT).toBe(3);
+  });
+
+  it("상시 구역을 펼치면 다른 구역처럼 5건에 더보기마다 20건씩 늘어납니다", () => {
+    expect(sectionLimit("always", 0, true)).toBe(5);
+    expect(sectionLimit("always", 1, true)).toBe(5 + LOAD_MORE_STEP);
+  });
+
+  it("접수 중·접수 예정 구역은 펼침과 상관없이 처음 5건입니다", () => {
+    expect(sectionLimit("ongoing", 0, false)).toBe(5);
+    expect(sectionLimit("upcoming", 1, false)).toBe(5 + LOAD_MORE_STEP);
   });
 });
 

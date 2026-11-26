@@ -9,6 +9,7 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode }
 import NoticeRow from "@/components/board/NoticeRow";
 import StatusBoard from "@/components/board/StatusBoard";
 import NoticePanel from "@/components/notice/NoticePanel";
+import type { PopularNotice } from "@/db/homeData";
 import ConditionBar from "@/components/search/ConditionBar";
 import ConditionPicker from "@/components/search/ConditionPicker";
 import SearchBox from "@/components/search/SearchBox";
@@ -29,7 +30,7 @@ import {
 import type { DictionaryEntry } from "@/domain/search/interpretQuery";
 import { matchNotices, type NoticeMatch } from "@/domain/search/matchNotices";
 import { recommendNotices } from "@/domain/search/recommendNotices";
-import { boardCardOf, toBoardColumns } from "@/hooks/board/boardColumns";
+import { boardCardOf, toBoardColumns, type BoardOrder } from "@/hooks/board/boardColumns";
 import { useNoticeMemory } from "@/hooks/notice/useNoticeMemory";
 import { useSearch } from "@/hooks/search/useSearch";
 import { afterLeave } from "@/hooks/ui/motion";
@@ -60,9 +61,17 @@ interface SearchHomeProps {
   syncedAt: string | null; // 데이터 최종 갱신 시각 (ISO). 수집 기록이 없으면 null
   alwaysNote?: string | null; // 상시 열 안내 (상시 혜택을 일부만 보낼 때)
   isSample?: boolean; // 샘플 데이터로 그리는 중 (첫 화면 고지에 함께 알린다)
+  popular?: PopularNotice[]; // 첫 화면에 둘 많이 찾는 혜택 (없으면 예시 검색어)
 }
 
-export default function SearchHome({ notices, dictionary, syncedAt, alwaysNote = null, isSample = false }: SearchHomeProps) {
+export default function SearchHome({
+  notices,
+  dictionary,
+  syncedAt,
+  alwaysNote = null,
+  isSample = false,
+  popular = [],
+}: SearchHomeProps) {
   const today = useSeoulToday();
   const search = useSearch(dictionary);
   const toast = useToast();
@@ -82,6 +91,8 @@ export default function SearchHome({ notices, dictionary, syncedAt, alwaysNote =
   const memory = useNoticeMemory();
   // 목록 위 보기 전환: 검색 결과 / 최근 본 공고 / 관심 공고. 최근·관심은 검색 조건과 상관없이 보여 준다
   const [listView, setListView] = useState<"results" | "recent" | "saved">("results");
+  // 검색 결과 구역 안의 순서: 맞춤순(조건과 분명히 맞은 공고 먼저) / 마감순
+  const [order, setOrder] = useState<BoardOrder>("match");
   const savedOnly = listView === "saved";
   const recentOnly = listView === "recent";
 
@@ -145,7 +156,7 @@ export default function SearchHome({ notices, dictionary, syncedAt, alwaysNote =
           .filter((column) => column.key !== "always")
           .reduce((sum, column) => sum + column.cards.length, 0)
       : 0;
-  const columns = useMemo(() => (today ? toBoardColumns(boardMatches, today) : []), [boardMatches, today]);
+  const columns = useMemo(() => (today ? toBoardColumns(boardMatches, today, order) : []), [boardMatches, today, order]);
   const total = columns.reduce((sum, column) => sum + column.cards.length, 0);
   // 결과가 한 건이면 표시할 이유가 없다. 보드 카드에 "먼저 보기"로 붙인다 (관심 공고만 볼 때는 고를 근거가 없다)
   const recommendedIds = useMemo(() => {
@@ -315,7 +326,7 @@ export default function SearchHome({ notices, dictionary, syncedAt, alwaysNote =
 
   // 목록 바로 위: 검색 결과 / 최근 / 관심 보기 전환
   const listHeader = (
-    <div className="flex shrink-0 items-center gap-3 pb-4">
+    <div className="flex shrink-0 flex-wrap items-center gap-3 pb-4">
       {heading}
       <div role="group" aria-label="목록 보기" className="relative flex items-center gap-1">
         {tabMark !== null && (
@@ -365,6 +376,29 @@ export default function SearchHome({ notices, dictionary, syncedAt, alwaysNote =
           관심 <Count value={memory.savedIds.size} />
         </button>
       </div>
+      {/* 검색 결과 보기에서만: 구역 안의 순서를 맞춤순 / 마감순으로 바꾼다 (보기 전환보다 작게, 오른쪽 끝에) */}
+      {listView === "results" && (
+        <div role="group" aria-label="정렬" className="ml-auto flex items-center gap-0.5 rounded-md bg-line/60 p-0.5">
+          {(
+            [
+              ["match", "맞춤순"],
+              ["deadline", "마감순"],
+            ] as const
+          ).map(([value, label]) => (
+            <button
+              key={value}
+              type="button"
+              aria-pressed={order === value}
+              onClick={() => setOrder(value)}
+              className={`min-h-8 rounded-sm px-3 text-[13px] transition-colors ${
+                order === value ? "bg-surface font-semibold text-ink shadow-sm" : "text-muted hover:text-ink"
+              }`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+      )}
       {recentOnly && recentCards.length > 0 && (
         <button type="button" onClick={memory.clearRecent} className="ml-auto min-h-9 px-1 text-sm text-muted hover:text-ink">
           기록 지우기
@@ -417,9 +451,9 @@ export default function SearchHome({ notices, dictionary, syncedAt, alwaysNote =
             <div className="flex flex-col items-center gap-3 pb-10 text-center">
               {/* 로고 마크 + 서비스명 (마크는 장식이라 화면 낭독기는 이름만 읽는다) */}
               <div className="flex items-center gap-3.5">
-                <LogoMark className="h-11 w-auto" />
-                {start && <h1 className="text-5xl font-extrabold tracking-tight">혜택톡톡</h1>}
-                {!start && <p className="text-5xl font-extrabold tracking-tight">혜택톡톡</p>}
+                <LogoMark className="h-14 w-auto" />
+                {start && <h1 className="text-5xl font-extrabold tracking-tight">다람이</h1>}
+                {!start && <p className="text-5xl font-extrabold tracking-tight">다람이</p>}
               </div>
               <p className="text-lg text-ink-2">이번 달 정부지원, 한눈에</p>
             </div>
@@ -437,7 +471,7 @@ export default function SearchHome({ notices, dictionary, syncedAt, alwaysNote =
           {showResultsArea && (
             <Link
               href="/"
-              aria-label="혜택톡톡 첫 화면으로"
+              aria-label="다람이 첫 화면으로"
               onClick={(event) => {
                 event.preventDefault();
                 startOver();
@@ -446,15 +480,15 @@ export default function SearchHome({ notices, dictionary, syncedAt, alwaysNote =
                 resultsLeaving ? leavingClass : "motion-safe:animate-fade-in motion-safe:[animation-delay:300ms]"
               }`}
             >
-              <LogoMark className="h-7 w-auto" />
-              혜택톡톡
+              <LogoMark className="h-8 w-auto" />
+              다람이
             </Link>
           )}
           <SearchBox size={start ? "large" : "compact"} onSearch={search.search} />
         </div>
 
         {!showResultsArea ? (
-          <StartScreen onSearch={search.search} onShowAll={search.showAll} />
+          <StartScreen popular={popular} onSearch={search.search} onOpenNotice={search.openNotice} onShowAll={search.showAll} />
         ) : (
           // 떠오르기 애니메이션은 끝난 뒤에도 이 요소를 별도 쌓임 층으로 만든다. 그 안에 있는 조건 추가 창의 z-50이 갇혀
           // dim과 목록 뒤로 가려지지 않도록, 창이 열리면(data-add-open) 이 요소 자체를 dim 위로 올린다

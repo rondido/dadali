@@ -55,12 +55,34 @@ describe("interpretQuery", () => {
       ["70살", "senior"],
       ["40대", "middle"],
       ["20대", "youth"],
+      ["17살", "child"],
+      ["7세", "child"],
+      ["10대", "child"],
     ])('"%s"는 %s 나이대로 바꿉니다', (text, expected) => {
       expect(interpretQuery(text, DICTIONARY).conditions.age).toBe(expected);
     });
 
     it("숫자로 적은 나이가 나이대 단어보다 먼저입니다", () => {
       expect(interpretQuery("청년인데 45살", DICTIONARY).conditions.age).toBe("middle");
+    });
+
+    test.each([
+      ["30", "youth"],
+      ["서울 52 창업", "middle"],
+      ["카페 67", "senior"],
+    ])('단위 없이 홀로 쓴 두 자리 수 "%s"도 나이로 봅니다', (text, expected) => {
+      const result = interpretQuery(text, DICTIONARY);
+      expect(result.conditions.age).toBe(expected);
+      expect(result.unknownTerms).toEqual([]);
+    });
+
+    it("다른 글자와 붙었거나 19 미만이거나 긴 수는 나이로 보지 않고, 숫자만인 조각은 단어 검색에도 쓰지 않습니다", () => {
+      for (const text of ["30만원 대출", "2030 청년", "10 창업", "1인 가구"]) {
+        const result = interpretQuery(text, DICTIONARY);
+        expect(result.conditions.age === null || text.includes("청년"), text).toBe(true);
+        expect(result.unknownTerms.some((t) => /^\d+$/.test(t)), text).toBe(false);
+      }
+      expect(interpretQuery("2030 청년", DICTIONARY).conditions.age).toBe("youth");
     });
   });
 

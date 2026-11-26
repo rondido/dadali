@@ -1,6 +1,6 @@
 @import "tailwindcss";
 
-/* 혜택톡톡 디자인 토큰 */
+/* 다람이 디자인 토큰 */
 :root {
   /* 바탕: 페이지는 옅은 푸른색, ground는 패널 안에서 묶어 보여줄 영역의 연한 회색 */
   --background: #f3f6fb;

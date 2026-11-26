@@ -2,7 +2,7 @@
 export const SOURCE_INFO: Record<string, { name: string; url: string }> = {
   kstartup: { name: "K-Startup", url: "https://www.k-startup.go.kr" },
   gov24: { name: "정부24", url: "https://www.gov.kr" },
-  manual: { name: "혜택톡톡", url: "https://www.gov.kr" },
+  manual: { name: "다람이", url: "https://www.gov.kr" },
 };
 
 export function sourceInfoOf(source: string): { name: string; url: string } {
