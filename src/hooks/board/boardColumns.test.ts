@@ -166,6 +166,17 @@ describe("toBoardColumns", () => {
       const ids = toBoardColumns(matches, TODAY).find((c) => c.key === "always")!.cards.map((c) => c.match.notice.id);
       expect(ids).toEqual(["matched", "popular"]);
     });
+
+    it("맞춤순에서 강도가 같으면 대상이 적게 붙은(그 처지 전용) 상시 혜택이 조회수보다 먼저입니다", () => {
+      const matches = [
+        { notice: noticeOf({ id: "everyone", isAlways: true, views: 9_000_000 }), reasons: [], strength: 1 },
+        { notice: noticeOf({ id: "many", isAlways: true, views: 5_000_000 }), reasons: [], strength: 1, targetBreadth: 4 },
+        { notice: noticeOf({ id: "only", isAlways: true, views: 10 }), reasons: [], strength: 1, targetBreadth: 1 },
+      ];
+
+      const ids = toBoardColumns(matches, TODAY).find((c) => c.key === "always")!.cards.map((c) => c.match.notice.id);
+      expect(ids).toEqual(["only", "many", "everyone"]);
+    });
   });
 
   describe("카드 배지", () => {

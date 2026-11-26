@@ -5,6 +5,7 @@ import type { IsoDate, Notice } from "@/domain/notice/notice";
 import { sourceInfoOf } from "@/domain/notice/sources";
 import { isAgeGroup, isIndustry, isTarget, isTopic } from "@/domain/search/conditionValues";
 import { hasConditions, type SearchConditions } from "@/domain/search/conditions";
+import { NOT_TARGETED } from "@/domain/search/matchNotices";
 import { orgPrefixesOf } from "@/domain/search/districts";
 import { ADULT_TITLE, MINORS_TITLE } from "@/domain/notice/minorsHint";
 
@@ -130,13 +131,18 @@ export async function loadHomeData(
   // 정렬에 상수를 넣으면 Postgres가 열 번호로 읽으므로, 필요할 때만 넣는다
   const localLast =
     inSidoDistrict && conditions.district === null ? [asc(sql`(case when ${inSidoDistrict} then 1 else 0 end)`)] : [];
-  // 분명히 맞은 혜택을 먼저, 그다음 시·도 전체 혜택, 많이 찾는 혜택(조회수), 이름순 (boardColumns의 상시 열과 같은 순서)
+  // 대상으로 찾으면 대상이 적게 붙은(그 처지 전용) 혜택을 먼저 (matchNotices의 targetBreadth)
+  const targetFirst =
+    conditions.target === null
+      ? []
+      : [asc(sql`(case when ${conditions.target} = any(${notice.targets}) then cardinality(${notice.targets}) else ${NOT_TARGETED} end)`)];
+  // 분명히 맞은 혜택을 먼저, 그다음 대상 전용 혜택, 시·도 전체 혜택, 많이 찾는 혜택(조회수), 이름순 (boardColumns의 상시 열과 같은 순서)
   const alwaysRowsOf = (where: ReturnType<typeof and>) =>
     db
       .select(columns)
       .from(notice)
       .where(where)
-      .orderBy(desc(strength), ...localLast, desc(views), asc(notice.title))
+      .orderBy(desc(strength), ...targetFirst, ...localLast, desc(views), asc(notice.title))
       .limit(ALWAYS_LIMIT);
   const countOf = async (where: ReturnType<typeof and>) => (await db.select({ n: count() }).from(notice).where(where))[0].n;
 
