@@ -3,7 +3,7 @@
 import { SAMPLE_NOTICES, SAMPLE_SYNCED_AT } from "@/data/sampleNotices";
 import type { IsoDate, Notice } from "@/domain/notice/notice";
 import { sourceInfoOf } from "@/domain/notice/sources";
-import { isAgeGroup, isIndustry, isTopic } from "@/domain/search/conditionValues";
+import { isAgeGroup, isIndustry, isTarget, isTopic } from "@/domain/search/conditionValues";
 import { hasConditions, type SearchConditions } from "@/domain/search/conditions";
 import { orgPrefixesOf } from "@/domain/search/districts";
 import { ADULT_TITLE, MINORS_TITLE } from "@/domain/notice/minorsHint";
@@ -72,11 +72,12 @@ export async function loadHomeData(
     ageGroups,
     regionCodes: notice.regionCodes,
     industries: notice.industries,
+    targets: notice.targets,
     minorsOnly,
     views,
   };
   type Row = NoticeRow;
-  type TargetColumn = typeof notice.regionCodes | typeof notice.industries | typeof ageGroups;
+  type TargetColumn = typeof notice.regionCodes | typeof notice.industries | typeof notice.targets | typeof ageGroups;
 
   // 숨김·확인 필요 공고는 보여주지 않는다 (RLS의 공개 규칙과 같다)
   const visible = and(eq(notice.isHidden, false), ne(notice.parseStatus, "check"));
@@ -98,6 +99,7 @@ export async function loadHomeData(
       ? sql`not (${inSidoDistrict} and ${orgSecond} <> ${conditions.district})`
       : undefined,
     allOr(ageGroups, conditions.age),
+    allOr(notice.targets, conditions.target),
     allOr(notice.industries, conditions.biz),
     conditions.topics.length > 0 ? arrayOverlaps(notice.topics, conditions.topics) : undefined,
   );
@@ -118,6 +120,7 @@ export async function loadHomeData(
       hit(notice.regionCodes, conditions.region),
       sameDistrict ? sql`(case when ${sameDistrict} then 1 else 0 end)` : sql`0`,
       hit(ageGroups, conditions.age),
+      hit(notice.targets, conditions.target),
       hit(notice.industries, conditions.biz),
       ...conditions.topics.map((topic) => sql`(case when ${topic} = any(${notice.topics}) then 1 else 0 end)`),
     ],
@@ -205,6 +208,7 @@ interface NoticeRow {
   ageGroups: string[];
   regionCodes: string[];
   industries: string[];
+  targets: string[];
   minorsOnly: boolean;
   views: number;
 }
@@ -223,6 +227,7 @@ function toNotice(row: NoticeRow): Notice {
     ageGroups: row.ageGroups.filter(isAgeGroup),
     regionCodes: row.regionCodes,
     industries: row.industries.filter(isIndustry),
+    targets: row.targets.filter(isTarget),
     topics: row.topics.filter(isTopic),
     minorsOnly: row.minorsOnly,
     views: row.views,

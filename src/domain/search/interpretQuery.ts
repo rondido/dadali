@@ -1,11 +1,11 @@
 // 자유 입력 문장을 검색 조건으로 바꾸는 사전 규칙 해석 (기획서 5-1장)
 // 사전은 인자로 받는다 (src/data/dictionary.ts: 시·도와 전국 시·군·구, 자주 쓰는 말과 비슷한 말)
-import { isAgeGroup, isIndustry, isRegionCode, isTopic, type AgeGroup, type RegionCode } from "./conditionValues";
+import { isAgeGroup, isIndustry, isRegionCode, isTarget, isTopic, type AgeGroup, type RegionCode } from "./conditionValues";
 import { EMPTY_CONDITIONS, type SearchConditions } from "./conditions";
 
 export interface DictionaryEntry {
   term: string;
-  kind: "region" | "age" | "industry" | "topic";
+  kind: "region" | "age" | "target" | "industry" | "topic";
   value: string;
   // 같은 단어가 가리킬 수 있는 다른 지역 (예: 광주 → 광주광역시 / 경기 광주시)
   ambiguousWith?: string[];
@@ -131,6 +131,7 @@ export function interpretQuery(text: string, dictionary: DictionaryEntry[]): Int
     for (const entry of entries) {
       if (entry.kind === "region") addRegion(entry);
       if (entry.kind === "age" && conditions.age === null && isAgeGroup(entry.value)) conditions.age = entry.value;
+      if (entry.kind === "target" && conditions.target === null && isTarget(entry.value)) conditions.target = entry.value;
       if (entry.kind === "industry" && conditions.biz === null && isIndustry(entry.value)) conditions.biz = entry.value;
       if (entry.kind === "topic" && isTopic(entry.value) && !conditions.topics.includes(entry.value)) {
         conditions.topics.push(entry.value);

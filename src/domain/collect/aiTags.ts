@@ -1,8 +1,8 @@
-// AI 태깅 (검색 정확도 개선): 공고 원문을 Claude에 주고 검색용 태그(지역·나이대·업종·주제)를 받는다
+// AI 태깅 (검색 정확도 개선): 공고 원문을 Claude에 주고 검색용 태그(지역·나이대·대상·업종·주제)를 받는다
 // 수집 규칙(kstartup.ts, gov24.ts)이 비워 둔 태그가 "전체 대상"으로 통과해 검색 결과에 관련 없는 공고가 섞이는 문제를 줄인다
 import { createHash } from "node:crypto";
 import { z } from "zod";
-import { AGE_GROUPS, INDUSTRIES, REGIONS, TOPICS } from "@/domain/search/conditionValues";
+import { AGE_GROUPS, INDUSTRIES, REGIONS, TARGETS, TOPICS } from "@/domain/search/conditionValues";
 import type { NoticeRecord } from "./record";
 
 const values = <T extends { value: string }>(options: readonly T[]) =>
@@ -12,6 +12,7 @@ export const AiTagsSchema = z.object({
   regions: z.array(z.enum(values(REGIONS))),
   ages: z.array(z.enum(values(AGE_GROUPS))),
   minors_only: z.boolean(),
+  targets: z.array(z.enum(values(TARGETS))),
   industries: z.array(z.enum(values(INDUSTRIES))),
   topics: z.array(z.enum(values(TOPICS))),
 });
@@ -35,6 +36,10 @@ ages: 신청 자격에 나이 제한이 있을 때만. child = 만 18세 이하(
   혜택을 받는 사람의 나이로 정한다. 보호자가 대신 신청하더라도 혜택이 아이에게 가면 child.
   나이 범위가 여러 그룹에 걸치면 해당 그룹을 모두 넣는다 (예: 고등학생·대학생 장학금 = child, youth). 나이 제한이 없으면 빈 배열.
 minors_only: 대상이 만 18세 이하뿐이면 true. 그 경우 ages는 child 하나.
+targets: 신청 자격이 특정 처지의 사람·가구로 정해질 때만(여러 개 가능). parent 임산부·출산 가정·영유아 양육 가정, disabled 장애인과 그 가족,
+  lowincome 기초생활수급자·차상위·저소득층처럼 소득 기준을 넘으면 받을 수 없는 혜택, singleparent 한부모·미혼모·조손 가정, multichild 다자녀 가정,
+  veteran 국가유공자·보훈대상자·제대군인, multicultural 다문화가족·결혼이민자·외국인. 이런 제한 없이 누구나 받을 수 있으면 빈 배열.
+  여러 대상 중 하나면 되는 혜택(예: 기초수급자·차상위·장애인 가구)은 해당하는 것을 모두 넣는다.
 industries: 특정 업종 종사자·사업자만 대상일 때만. mfg 제조, it IT·지식서비스, retail 도소매·음식, agri 농림어업, culture 문화·콘텐츠, etc 그 밖의 특정 업종. 업종 제한이 없으면 빈 배열.
 topics: 지원 내용의 성격(여러 개 가능). facility 시설·인테리어·장비, house 주거, fund 현금·보조금·대출·융자·보험료 지원, job 일자리·취업, startup 창업, export 수출·해외진출, edu 교육·훈련·멘토링·컨설팅, market 판로·마케팅·홍보, digital 디지털 전환·스마트화. 어느 것에도 맞지 않으면 빈 배열.`;
 
@@ -80,6 +85,7 @@ export function normalizeAiTags(tags: AiTags): AiTags {
     regions: sorted(tags.regions),
     ages,
     minors_only: tags.minors_only,
+    targets: sorted(tags.targets),
     industries: sorted(tags.industries),
     topics: sorted(tags.topics),
   };

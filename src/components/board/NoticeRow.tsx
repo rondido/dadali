@@ -18,10 +18,10 @@ interface ConditionLabel {
   matched: boolean;
 }
 
-// 대상(지역·나이대·업종) 레이블에 맞음 표시를 붙이고, 대상에 없는 맞은 조건(주제·키워드)을 덧붙인다
+// 대상(지역·나이대·가구 상황·업종) 레이블에 맞음 표시를 붙이고, 대상에 없는 맞은 조건(주제·키워드)을 덧붙인다
 function conditionLabels(notice: Notice, reasons: string[]): ConditionLabel[] {
-  const { regions, ages, industries } = targetsOf(notice);
-  const targets = [...regions, ...ages, ...industries];
+  const { regions, ages, targets: groups, industries } = targetsOf(notice);
+  const targets = [...regions, ...ages, ...groups, ...industries];
   const extra = reasons.filter((reason) => !targets.includes(reason));
   const all = [...targets, ...extra].map((text) => ({ text, matched: reasons.includes(text) }));
   return all.filter((label, i) => label.matched || i < MAX_LABELS);

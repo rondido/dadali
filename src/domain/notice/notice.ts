@@ -1,5 +1,5 @@
 // 공고 데이터 모양과 공통 규칙 (기획서 8장 Notice). 보드·상세 등 어떤 뷰에서도 같은 타입을 쓴다.
-import type { AgeGroup, Industry, Topic } from "@/domain/search/conditionValues";
+import type { AgeGroup, Industry, Target, Topic } from "@/domain/search/conditionValues";
 
 // 날짜는 "YYYY-MM-DD" 문자열 (DB date 컬럼 값 그대로, 시간대 변환 없음)
 export type IsoDate = string;
@@ -22,6 +22,7 @@ export interface Notice extends NoticeSchedule {
   regionCodes: string[]; // 시·도 코드, 비면 전국
   industries: Industry[];
   topics: Topic[];
+  targets?: Target[]; // 대상(가구 상황: 장애인·저소득 등, AI 태깅). 없거나 비면 누구나 대상
   minorsOnly?: boolean; // 대상이 미성년자뿐 (AI 태깅). 나이대 조건으로 찾을 때는 뺀다
   views?: number; // 출처 사이트 조회수 (정부24만 있음). 많이 찾는 혜택을 먼저 보여 주는 데 쓴다. 없으면 0으로 본다
   detailUrl: string | null; // 원문 공고 주소. 없거나 공식 도메인이 아니면 sourceUrl로 보낸다

@@ -73,6 +73,7 @@ export function fromGov24(item: Record<string, unknown>): NoticeRecord {
     ]),
     ageGroups: ageGroupsOf(cleanText(item["지원대상"])),
     regionCodes: sidoCodesOfOrg(org),
+    targets: [],
     industries: fields.includes("농림축산어업") ? (["agri"] satisfies Industry[]) : [],
     rawPayload: item,
     contentHash: contentHashOf("gov24", item),

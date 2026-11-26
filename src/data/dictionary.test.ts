@@ -95,3 +95,30 @@ describe("해석 사전", () => {
     expect([...kinds].filter(([, k]) => k.size > 1).map(([term]) => term)).toEqual(["귀농"]);
   });
 });
+
+
+describe("대상(가구 상황) 낱말", () => {
+  it.each([
+    ["출산", "parent"],
+    ["육아휴직", "parent"],
+    ["장애인", "disabled"],
+    ["기초생활수급자", "lowincome"],
+    ["차상위", "lowincome"],
+    ["한부모", "singleparent"],
+    ["다자녀", "multichild"],
+    ["국가유공자", "veteran"],
+    ["다문화", "multicultural"],
+  ])("%s → %s", (text, target) => {
+    expect(interpretQuery(text, DICTIONARY).conditions.target).toBe(target);
+  });
+
+  it("다른 조건과 함께 씁니다", () => {
+    const { conditions, unknownTerms } = interpretQuery("장애인 월세", DICTIONARY);
+    expect(conditions).toMatchObject({ target: "disabled", topics: ["house"] });
+    expect(unknownTerms).toEqual([]);
+  });
+
+  it("다자녀는 자녀(아동·청소년)로 읽지 않습니다", () => {
+    expect(interpretQuery("다자녀", DICTIONARY).conditions.age).toBeNull();
+  });
+});

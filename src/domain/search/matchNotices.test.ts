@@ -193,3 +193,28 @@ describe("matchNotices", () => {
     });
   });
 });
+
+describe("대상(가구 상황) 조건", () => {
+  const forDisabled = noticeOf({ id: "disabled", targets: ["disabled"] });
+  const forLowIncome = noticeOf({ id: "lowincome", targets: ["lowincome", "disabled"] });
+  const forSingleParent = noticeOf({ id: "single", targets: ["singleparent"] });
+  const forEveryone = noticeOf({ id: "everyone" });
+
+  it("대상이 정해진 공고는 그 대상으로 찾을 때만, 대상이 빈 공고는 누구나 대상으로 통과합니다", () => {
+    const conditions = { ...EMPTY_CONDITIONS, target: "disabled" as const };
+    expect(idsOf([forDisabled, forLowIncome, forSingleParent, forEveryone], conditions)).toEqual([
+      "disabled",
+      "lowincome",
+      "everyone",
+    ]);
+  });
+
+  it("대상과 분명히 맞은 공고만 강도에 셉니다", () => {
+    const conditions = { ...EMPTY_CONDITIONS, target: "disabled" as const };
+    const { matches } = matchNotices([forDisabled, forEveryone], conditions);
+    expect(matches.map((m) => [m.notice.id, m.strength, m.reasons])).toEqual([
+      ["disabled", 1, ["장애인"]],
+      ["everyone", 0, []],
+    ]);
+  });
+});
