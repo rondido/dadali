@@ -1,8 +1,10 @@
 // 공고 목록의 한 줄 (기획서 5장 카드 구성을 목록형으로 배치)
-// 오른쪽 고정 폭 열에 D-day를 세로로 맞춰 두어 남은 날을 위아래로 훑으며 비교할 수 있게 한다
-// 읽는 순서: 머리말(기관) → 공고명 → 대상 조건 레이블, 오른쪽에 언제(D-day). 줄 어디를 눌러도 상세 패널이 열린다 (제목 버튼을 줄 전체로 늘림)
+// 오른쪽 고정 폭 열에 D-day와 실제 날짜를 세로로 맞춰 두어 남은 날을 위아래로 훑으며 비교할 수 있게 한다 (좁은 화면은 줄 맨 위)
+// 읽는 순서: 머리말(기관) → 공고명 → 지원 내용 한 줄 → 대상 조건 레이블, 오른쪽에 언제(D-day·날짜).
+// 줄 어디를 눌러도 상세 패널이 열린다 (제목 버튼을 줄 전체로 늘림)
 import type { Notice } from "@/domain/notice/notice";
 import { targetsOf } from "@/domain/notice/noticeTargets";
+import { rowDateOf } from "@/domain/notice/rowDate";
 import type { BoardCard } from "@/hooks/board/boardColumns";
 
 // 대상을 정하지 않아 통과한 공고에 붙는 태그. 조건과 실제로 맞은 부분이 아니므로 맞음으로 칠하지 않는다
@@ -39,14 +41,16 @@ export default function NoticeRow({ card, recommended, selected, viewed, saved, 
   const { notice } = match;
   const reasons = match.reasons.filter((reason) => !PASS_THROUGH_REASONS.has(reason));
   const labels = conditionLabels(notice, reasons);
+  const date = rowDateOf(notice, status);
 
   return (
     <article
-      className={`group relative flex items-center gap-4 px-5 py-5 transition-colors has-[button:focus-visible]:z-10 has-[button:focus-visible]:outline-2 has-[button:focus-visible]:-outline-offset-2 has-[button:focus-visible]:outline-primary sm:gap-6 sm:px-7 sm:py-6 ${
+      className={`group relative flex flex-col gap-1.5 px-5 py-5 transition-colors has-[button:focus-visible]:z-10 has-[button:focus-visible]:outline-2 has-[button:focus-visible]:-outline-offset-2 has-[button:focus-visible]:outline-primary sm:px-7 sm:py-6 md:flex-row md:items-center md:gap-6 ${
         selected ? "bg-primary-selected" : ""
       }`}
     >
-      {/* 머리말(기관) → 공고명 → 대상 조건. 분야는 고르는 데 쓰이지 않아 보여주지 않고, 요약은 길어 잘리므로 상세 패널에서만 보여준다 */}
+      {/* 머리말(기관) → 공고명 → 지원 내용 → 대상 조건. 분야는 고르는 데 쓰이지 않아 보여주지 않는다.
+          지원 내용은 상세를 열지 않고도 고를 수 있게 앞부분만 보여 준다 (넓은 화면 한 줄, 좁은 화면 두 줄) */}
       <div className="flex min-w-0 flex-1 flex-col gap-1.5">
         {/* 담은 공고는 기관명 앞에 작은 채운 북마크로만 표시한다 (목록에는 담기 버튼을 두지 않는다) */}
         <p className="flex items-center gap-1.5 text-[13px] text-muted">
@@ -81,6 +85,8 @@ export default function NoticeRow({ card, recommended, selected, viewed, saved, 
           </button>
         </h3>
 
+        {notice.summary && <p className="line-clamp-2 text-[13px] leading-normal text-ink-2 md:line-clamp-1 md:text-sm">{notice.summary}</p>}
+
         {/* 대상 조건 레이블: 누구 대상인지(지역·나이대·업종). 내 검색 조건과 맞은 것만 파랗게 칠하고,
             대상에는 없지만 맞은 것(주제·키워드)은 뒤에 덧붙인다 */}
         <ul aria-label="대상 조건" className="mt-2 flex flex-wrap gap-1.5">
@@ -100,18 +106,21 @@ export default function NoticeRow({ card, recommended, selected, viewed, saved, 
         </ul>
       </div>
 
-      {/* 언제: 오른쪽 고정 폭 열에 D-day만 오른쪽으로 맞추고 줄의 세로 가운데에 둔다 (정확한 날짜는 상세 패널에서).
-          임박(7일 안)은 빨강. 상시는 구역 이름이 이미 말해 주므로 D-day를 두지 않는다 */}
-      {/* 언제: 오른쪽 고정 폭 열에 D-day만 오른쪽으로 맞추고 줄의 세로 가운데에 둔다 (정확한 날짜는 상세 패널에서).
-          임박(7일 안)은 빨강. 상시는 구역 이름이 이미 말해 주므로 D-day를 두지 않는다 */}
+      {/* 언제: 넓은 화면은 오른쪽 고정 폭 열에 D-day와 그 아래 실제 날짜를 오른쪽으로 맞추고 줄의 세로 가운데에 둔다.
+          좁은 화면은 줄 맨 위에 D-day와 날짜를 나란히 둔다. 임박(7일 안)은 빨강. 상시는 구역 이름이 이미 말해 주므로 두지 않는다 */}
       {!notice.isAlways && (
-        <span
-          className={`w-16 shrink-0 text-right tabular-nums sm:w-24 ${
-            status === "upcoming" ? "text-[15px] font-medium text-ink-2" : `text-[17px] font-bold ${urgent ? "text-danger" : "text-ink"}`
-          }`}
-        >
-          {badge}
-        </span>
+        <div className="order-first flex shrink-0 items-baseline gap-2 tabular-nums md:order-none md:w-24 md:flex-col md:items-end md:gap-0.5 md:text-right">
+          <span
+            className={
+              status === "upcoming"
+                ? "text-[15px] font-medium text-ink-2"
+                : `text-[15px] font-bold md:text-[17px] ${urgent ? "text-danger" : "text-ink"}`
+            }
+          >
+            {badge}
+          </span>
+          {date && <span className="text-[13px] text-muted">{date}</span>}
+        </div>
       )}
     </article>
   );

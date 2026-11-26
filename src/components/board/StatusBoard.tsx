@@ -4,10 +4,11 @@
 // 접수 중은 7일 안에 마감하는 공고를 넓은 간격으로 떼어 맨 위에 모은다 (소제목 대신 간격과 빨간 D-day로 구분).
 // 한 묶음 안의 줄은 간격 없이 이어 붙이고 얇은 가로선으로만 나눠, 카드 더미가 아니라 하나의 목록으로 읽히게 한다.
 // 구역 이름은 목록을 내려도 위에 붙어 있어, 지금 어느 구역을 보는지 글 없이 알 수 있다
+// 상시는 수가 많아 접수 중 공고를 묻히게 하므로 앞의 몇 건만 보이고 접어 둔다 (펼치기를 누르면 다른 구역처럼 더보기)
 import { useState } from "react";
 import NoticeRow from "@/components/board/NoticeRow";
 import type { BoardCard, BoardColumn, BoardColumnKey } from "@/hooks/board/boardColumns";
-import { LOAD_MORE_STEP, visibleCards, visibleLimit } from "@/hooks/board/visibleCards";
+import { LOAD_MORE_STEP, sectionLimit, visibleCards } from "@/hooks/board/visibleCards";
 
 interface StatusBoardProps {
   columns: BoardColumn[];
@@ -45,6 +46,8 @@ export default function StatusBoard({
   onOpen,
 }: StatusBoardProps) {
   const [loadMore, setLoadMore] = useState<Partial<Record<BoardColumnKey, number>>>({});
+  // 상시 구역은 앞의 몇 건만 보이고 접혀 있다가, 펼치기를 누르면 다른 구역처럼 더보기로 넘겨 본다
+  const [alwaysExpanded, setAlwaysExpanded] = useState(false);
   const sections = SECTION_ORDER.flatMap((key) => columns.filter((column) => column.key === key));
   // 먼저 보기 공고와 지금 열어 둔 공고는 접혀서 안 보이는 일이 없게 한다
   const pinnedIds = new Set(recommendedIds);
@@ -54,9 +57,16 @@ export default function StatusBoard({
     <div className="flex flex-col gap-14 pb-10">
       {sections.map((column) => {
         const clicks = loadMore[column.key] ?? 0;
-        const visible = visibleCards(column.cards, visibleLimit(clicks), pinnedIds);
+        const collapsed = column.key === "always" && !alwaysExpanded;
+        const visible = visibleCards(column.cards, sectionLimit(column.key, clicks, alwaysExpanded), pinnedIds);
         // 방금 더보기로 펼친 줄 (처음부터 보이던 줄은 움직이지 않는다). 떠오르는 순서는 위에서부터, 너무 길어지지 않게 10줄까지만 늦춘다
-        const before = clicks > 0 ? visibleCards(column.cards, visibleLimit(clicks - 1), pinnedIds) : visible;
+        // 상시를 막 펼쳤을 때는 접혀 있던 몇 건 뒤로 새로 보인 줄이 떠오른다
+        const before =
+          clicks > 0
+            ? visibleCards(column.cards, sectionLimit(column.key, clicks - 1, alwaysExpanded), pinnedIds)
+            : column.key === "always" && alwaysExpanded
+              ? visibleCards(column.cards, sectionLimit(column.key, 0, false), pinnedIds)
+              : visible;
         const revealedOrder = new Map(
           visible.filter((card) => !before.includes(card)).map((card, i) => [card.match.notice.id, Math.min(i, 10)]),
         );
@@ -106,7 +116,21 @@ export default function StatusBoard({
                   </ul>
                 ))}
 
-            {hiddenCount > 0 && (
+            {collapsed && hiddenCount > 0 && (
+              <button
+                type="button"
+                aria-expanded={false}
+                onClick={() => setAlwaysExpanded(true)}
+                className="mt-2 flex min-h-12 items-center justify-center gap-2 rounded-md bg-surface px-6 text-sm font-medium text-ink-2 hover:bg-primary-tint hover:text-primary"
+              >
+                상시 혜택 {hiddenCount.toLocaleString()}건 펼치기
+                <svg viewBox="0 0 14 14" fill="none" aria-hidden="true" className="size-3.5">
+                  <path d="M3.5 5.5 7 9l3.5-3.5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </button>
+            )}
+
+            {!collapsed && hiddenCount > 0 && (
               <button
                 type="button"
                 onClick={() => setLoadMore((current) => ({ ...current, [column.key]: (current[column.key] ?? 0) + 1 }))}

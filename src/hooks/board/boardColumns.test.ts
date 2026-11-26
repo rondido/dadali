@@ -55,6 +55,20 @@ describe("toBoardColumns", () => {
     expect(ids).toEqual(["soon-explicit", "later-explicit", "one-hit", "soon-open"]);
   });
 
+  it("마감순이면 맞은 정도와 상관없이 마감 빠른 순입니다 (시·군·구 공고도 뒤로 보내지 않습니다)", () => {
+    const open = { applyStart: "2026-11-01" };
+    const matches = [
+      { notice: noticeOf({ ...open, id: "later-explicit", applyEnd: "2026-11-30" }), reasons: [], strength: 2 },
+      { notice: noticeOf({ ...open, id: "soon-local", applyEnd: "2026-11-12" }), reasons: [], strength: 0, local: true },
+      { notice: noticeOf({ ...open, id: "middle", applyEnd: "2026-11-20" }), reasons: [], strength: 1 },
+    ];
+
+    const ids = toBoardColumns(matches, TODAY, "deadline")
+      .find((c) => c.key === "ongoing")!
+      .cards.map((c) => c.match.notice.id);
+    expect(ids).toEqual(["soon-local", "middle", "later-explicit"]);
+  });
+
   it("접수 예정 → 접수 중 → 상시 순서로 세 열을 만듭니다", () => {
     expect(columnsOf([]).map((c) => c.title)).toEqual(["접수 예정", "접수 중", "상시"]);
   });

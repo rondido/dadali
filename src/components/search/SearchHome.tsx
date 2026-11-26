@@ -29,7 +29,7 @@ import {
 import type { DictionaryEntry } from "@/domain/search/interpretQuery";
 import { matchNotices, type NoticeMatch } from "@/domain/search/matchNotices";
 import { recommendNotices } from "@/domain/search/recommendNotices";
-import { boardCardOf, toBoardColumns } from "@/hooks/board/boardColumns";
+import { boardCardOf, toBoardColumns, type BoardOrder } from "@/hooks/board/boardColumns";
 import { useNoticeMemory } from "@/hooks/notice/useNoticeMemory";
 import { useSearch } from "@/hooks/search/useSearch";
 import { afterLeave } from "@/hooks/ui/motion";
@@ -82,6 +82,8 @@ export default function SearchHome({ notices, dictionary, syncedAt, alwaysNote =
   const memory = useNoticeMemory();
   // 목록 위 보기 전환: 검색 결과 / 최근 본 공고 / 관심 공고. 최근·관심은 검색 조건과 상관없이 보여 준다
   const [listView, setListView] = useState<"results" | "recent" | "saved">("results");
+  // 검색 결과 구역 안의 순서: 맞춤순(조건과 분명히 맞은 공고 먼저) / 마감순
+  const [order, setOrder] = useState<BoardOrder>("match");
   const savedOnly = listView === "saved";
   const recentOnly = listView === "recent";
 
@@ -145,7 +147,7 @@ export default function SearchHome({ notices, dictionary, syncedAt, alwaysNote =
           .filter((column) => column.key !== "always")
           .reduce((sum, column) => sum + column.cards.length, 0)
       : 0;
-  const columns = useMemo(() => (today ? toBoardColumns(boardMatches, today) : []), [boardMatches, today]);
+  const columns = useMemo(() => (today ? toBoardColumns(boardMatches, today, order) : []), [boardMatches, today, order]);
   const total = columns.reduce((sum, column) => sum + column.cards.length, 0);
   // 결과가 한 건이면 표시할 이유가 없다. 보드 카드에 "먼저 보기"로 붙인다 (관심 공고만 볼 때는 고를 근거가 없다)
   const recommendedIds = useMemo(() => {
@@ -315,7 +317,7 @@ export default function SearchHome({ notices, dictionary, syncedAt, alwaysNote =
 
   // 목록 바로 위: 검색 결과 / 최근 / 관심 보기 전환
   const listHeader = (
-    <div className="flex shrink-0 items-center gap-3 pb-4">
+    <div className="flex shrink-0 flex-wrap items-center gap-3 pb-4">
       {heading}
       <div role="group" aria-label="목록 보기" className="relative flex items-center gap-1">
         {tabMark !== null && (
@@ -365,6 +367,29 @@ export default function SearchHome({ notices, dictionary, syncedAt, alwaysNote =
           관심 <Count value={memory.savedIds.size} />
         </button>
       </div>
+      {/* 검색 결과 보기에서만: 구역 안의 순서를 맞춤순 / 마감순으로 바꾼다 (보기 전환보다 작게, 오른쪽 끝에) */}
+      {listView === "results" && (
+        <div role="group" aria-label="정렬" className="ml-auto flex items-center gap-0.5 rounded-md bg-line/60 p-0.5">
+          {(
+            [
+              ["match", "맞춤순"],
+              ["deadline", "마감순"],
+            ] as const
+          ).map(([value, label]) => (
+            <button
+              key={value}
+              type="button"
+              aria-pressed={order === value}
+              onClick={() => setOrder(value)}
+              className={`min-h-8 rounded-sm px-3 text-[13px] transition-colors ${
+                order === value ? "bg-surface font-semibold text-ink shadow-sm" : "text-muted hover:text-ink"
+              }`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+      )}
       {recentOnly && recentCards.length > 0 && (
         <button type="button" onClick={memory.clearRecent} className="ml-auto min-h-9 px-1 text-sm text-muted hover:text-ink">
           기록 지우기
