@@ -15,7 +15,7 @@ import { join } from "node:path";
 
 config({ path: ".env.local" });
 
-const KEY = process.env.DATA_GO_KR_KEY ?? "";
+const KEY = (process.env.DATA_GO_KR_KEY ?? "").trim().replace(/^(["'])(.*)\1$/, "$2").trim();
 const PER_PAGE = 50;
 
 const SOURCES = [
