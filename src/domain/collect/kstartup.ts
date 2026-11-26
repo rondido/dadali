@@ -1,4 +1,4 @@
-// K-Startup 지원사업 공고 → 혜택톡톡 공고 (기획서 13장 다달이 분류 매핑)
+// K-Startup 지원사업 공고 → 다람이 공고 (기획서 13장 다달이 분류 매핑)
 import type { AgeGroup, RegionCode, Topic } from "@/domain/search/conditionValues";
 import { contentHashOf } from "./aiTags";
 import { parseCompactDate } from "./dates";

@@ -451,9 +451,9 @@ export default function SearchHome({
             <div className="flex flex-col items-center gap-3 pb-10 text-center">
               {/* 로고 마크 + 서비스명 (마크는 장식이라 화면 낭독기는 이름만 읽는다) */}
               <div className="flex items-center gap-3.5">
-                <LogoMark className="h-11 w-auto" />
-                {start && <h1 className="text-5xl font-extrabold tracking-tight">혜택톡톡</h1>}
-                {!start && <p className="text-5xl font-extrabold tracking-tight">혜택톡톡</p>}
+                <LogoMark className="h-14 w-auto" />
+                {start && <h1 className="text-5xl font-extrabold tracking-tight">다람이</h1>}
+                {!start && <p className="text-5xl font-extrabold tracking-tight">다람이</p>}
               </div>
               <p className="text-lg text-ink-2">이번 달 정부지원, 한눈에</p>
             </div>
@@ -471,7 +471,7 @@ export default function SearchHome({
           {showResultsArea && (
             <Link
               href="/"
-              aria-label="혜택톡톡 첫 화면으로"
+              aria-label="다람이 첫 화면으로"
               onClick={(event) => {
                 event.preventDefault();
                 startOver();
@@ -480,8 +480,8 @@ export default function SearchHome({
                 resultsLeaving ? leavingClass : "motion-safe:animate-fade-in motion-safe:[animation-delay:300ms]"
               }`}
             >
-              <LogoMark className="h-7 w-auto" />
-              혜택톡톡
+              <LogoMark className="h-8 w-auto" />
+              다람이
             </Link>
           )}
           <SearchBox size={start ? "large" : "compact"} onSearch={search.search} />
