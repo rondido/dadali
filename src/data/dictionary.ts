@@ -2,7 +2,7 @@
 // 단어가 사전 단어로 시작하면 그 뜻으로 본다 ("카페하는" → 카페). 그래서 흔한 낱말의 앞부분이 되는 짧은 말은 넣지 않는다
 // e2e 테스트(e2e/search.spec.ts)가 이 사전을 기준으로 검증하므로 바꿀 때 함께 고친다.
 import type { DictionaryEntry } from "@/domain/search/interpretQuery";
-import { REGIONS, type AgeGroup, type Industry, type RegionCode, type Topic } from "@/domain/search/conditionValues";
+import { REGIONS, type AgeGroup, type Industry, type RegionCode, type Target, type Topic } from "@/domain/search/conditionValues";
 import { DISTRICTS } from "@/domain/search/districts";
 
 const region = (term: string, value: string, ambiguousWith?: string[]): DictionaryEntry => ({
@@ -58,6 +58,7 @@ function districtEntries(): DictionaryEntry[] {
 const words = <V extends string>(kind: DictionaryEntry["kind"], value: V, terms: string[]): DictionaryEntry[] =>
   terms.map((term) => ({ term, kind, value }));
 const age = (value: AgeGroup, terms: string[]) => words("age", value, terms);
+const target = (value: Target, terms: string[]) => words("target", value, terms);
 const industry = (value: Industry, terms: string[]) => words("industry", value, terms);
 const topic = (value: Topic, terms: string[]) => words("topic", value, terms);
 
@@ -86,9 +87,22 @@ export const DICTIONARY: DictionaryEntry[] = [
   place("동탄", "41", "화성시"),
   place("광교", "41", "수원시"),
 
+  // "아이"는 "아이디어", "아이템"의 앞부분이라 넣지 않는다. "학생"은 대학생일 수도 있어 넣지 않는다
+  ...age("child", [
+    "아동", "청소년", "어린이", "영유아", "유아", "자녀", "초등", "중학생", "고등학생", "고교생", "미성년",
+  ]),
   ...age("youth", ["청년", "대학생", "대학원생", "취준생", "취업준비생", "사회초년생", "젊은"]),
   ...age("middle", ["중장년", "신중년", "중년", "장년"]),
   ...age("senior", ["어르신", "노인", "시니어", "고령", "노년", "경로"]),
+
+  // 대상(가구 상황). "출"·"장"처럼 짧은 말은 다른 낱말의 앞부분이 되어 넣지 않는다
+  ...target("parent", ["임신", "임산부", "출산", "출생", "산모", "산후", "난임", "신생아", "육아", "양육", "보육", "아이돌봄"]),
+  ...target("disabled", ["장애인", "장애", "발달장애", "휠체어"]),
+  ...target("lowincome", ["저소득", "기초생활", "기초수급", "수급자", "차상위", "생계", "의료급여", "취약계층", "긴급복지"]),
+  ...target("singleparent", ["한부모", "미혼모", "미혼부", "조손"]),
+  ...target("multichild", ["다자녀", "셋째", "다둥이"]),
+  ...target("veteran", ["보훈", "국가유공자", "유공자", "참전", "제대군인"]),
+  ...target("multicultural", ["다문화", "결혼이민", "이주민", "외국인"]),
 
   ...industry("retail", [
     "카페", "커피", "식당", "음식점", "요식", "외식", "치킨", "분식", "빵집", "베이커리", "제과", "술집", "주점",

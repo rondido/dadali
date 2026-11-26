@@ -2,7 +2,7 @@
 // 대상이 비어 있는 공고는 검색에는 통과하지만(전체 대상), 조건과 분명히 맞은 것이 아니므로 여기서는 세지 않는다
 import type { IsoDate } from "@/domain/notice/notice";
 import { noticeStatusOf, type NoticeStatus } from "@/domain/notice/noticeStatus";
-import { ageLabel, industryLabel, regionLabel, topicLabel } from "./conditionValues";
+import { ageLabel, industryLabel, regionLabel, targetLabel, topicLabel } from "./conditionValues";
 import type { SearchConditions } from "./conditions";
 import { orgDistrictOf } from "./districts";
 import type { NoticeMatch } from "./matchNotices";
@@ -21,6 +21,7 @@ function explicitReasons({ notice }: NoticeMatch, conditions: SearchConditions):
     reasons.push(regionLabel(conditions.region));
   }
   if (conditions.age && notice.ageGroups.includes(conditions.age)) reasons.push(ageLabel(conditions.age));
+  if (conditions.target && (notice.targets ?? []).includes(conditions.target)) reasons.push(targetLabel(conditions.target));
   if (conditions.biz && notice.industries.includes(conditions.biz)) reasons.push(industryLabel(conditions.biz));
   for (const topic of conditions.topics) {
     if (notice.topics.includes(topic)) reasons.push(topicLabel(topic));

@@ -85,6 +85,7 @@ async function main() {
         regionCodes: tags.regions,
         ageGroups: tags.ages,
         industries: tags.industries,
+        targets: tags.targets,
         topics: tags.topics,
         minorsOnly: tags.minors_only,
         tagHash: c.contentHash,

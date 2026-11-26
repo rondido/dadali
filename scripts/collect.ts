@@ -36,7 +36,8 @@ const MAX_PAGES = 50; // 응답이 이상해도 끝없이 돌지 않게
 const BATCH = 500;
 
 function serviceKey(): string {
-  const key = process.env.DATA_GO_KR_KEY ?? "";
+  // GitHub Secrets에 붙여 넣을 때 섞이기 쉬운 앞뒤 공백·줄바꿈·따옴표를 걷어 낸다 (섞이면 "등록되지 않은 인증키"로 거절된다)
+  const key = (process.env.DATA_GO_KR_KEY ?? "").trim().replace(/^(["'])(.*)\1$/, "$2").trim();
   if (!key) throw new Error("DATA_GO_KR_KEY가 없어요. .env.local 또는 GitHub Secrets를 확인하세요.");
   // Encoding 키(이미 %가 들어 있음)는 그대로, Decoding 키는 인코딩해서 붙인다
   return key.includes("%") ? key : encodeURIComponent(key);
@@ -120,6 +121,7 @@ async function collect(source: SourceName) {
             ageGroups: keepAiTag("age_groups"),
             regionCodes: keepAiTag("region_codes"),
             industries: keepAiTag("industries"),
+            targets: keepAiTag("targets"),
             minorsOnly: keepAiTag("minors_only"),
             rawPayload: sql`excluded.raw_payload`,
             contentHash: sql`excluded.content_hash`,

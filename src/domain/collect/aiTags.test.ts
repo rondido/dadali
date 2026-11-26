@@ -5,6 +5,7 @@ const tags = (over: Partial<AiTags> = {}): AiTags => ({
   regions: [],
   ages: [],
   minors_only: false,
+  targets: [],
   industries: [],
   topics: [],
   ...over,
@@ -33,12 +34,21 @@ describe("contentHashOf", () => {
 });
 
 describe("normalizeAiTags", () => {
-  it("세 나이대를 모두 붙였으면 나이 제한 없음(빈 배열)으로 바꿉니다", () => {
-    expect(normalizeAiTags(tags({ ages: ["youth", "middle", "senior"] })).ages).toEqual([]);
+  it("네 나이대를 모두 붙였으면 나이 제한 없음(빈 배열)으로 바꿉니다", () => {
+    expect(normalizeAiTags(tags({ ages: ["child", "youth", "middle", "senior"] })).ages).toEqual([]);
   });
 
-  it("미성년자 전용이면 나이대를 비웁니다", () => {
-    expect(normalizeAiTags(tags({ minors_only: true, ages: ["youth"] })).ages).toEqual([]);
+  it("어른 세 나이대만 붙였으면 그대로 둡니다 (아동·청소년은 대상이 아니다)", () => {
+    expect(normalizeAiTags(tags({ ages: ["youth", "middle", "senior"] })).ages).toEqual(["middle", "senior", "youth"]);
+  });
+
+  it("미성년자 전용이면 나이대는 아동·청소년 하나입니다", () => {
+    expect(normalizeAiTags(tags({ minors_only: true, ages: ["youth"] })).ages).toEqual(["child"]);
+    expect(normalizeAiTags(tags({ minors_only: true, ages: [] })).ages).toEqual(["child"]);
+  });
+
+  it("아동·청소년과 청년에 걸친 공고는 두 나이대를 모두 둡니다 (고등학생·대학생 장학금)", () => {
+    expect(normalizeAiTags(tags({ ages: ["youth", "child"] })).ages).toEqual(["child", "youth"]);
   });
 
   it("값의 중복을 없애고 정렬해 저장합니다", () => {
@@ -53,5 +63,11 @@ describe("tagModelOf", () => {
   it("기간 있는 공고는 정확한 모델, 상시 혜택은 저렴한 모델을 씁니다", () => {
     expect(tagModelOf(false)).toBe("claude-opus-5-5");
     expect(tagModelOf(true)).toBe("claude-haiku-5-5");
+  });
+});
+
+describe("대상(가구 상황) 태그", () => {
+  it("중복을 없애고 정렬해 저장합니다", () => {
+    expect(normalizeAiTags(tags({ targets: ["lowincome", "disabled", "lowincome"] })).targets).toEqual(["disabled", "lowincome"]);
   });
 });

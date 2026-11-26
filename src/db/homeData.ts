@@ -3,16 +3,27 @@
 import { SAMPLE_NOTICES, SAMPLE_SYNCED_AT } from "@/data/sampleNotices";
 import type { IsoDate, Notice } from "@/domain/notice/notice";
 import { sourceInfoOf } from "@/domain/notice/sources";
-import { isAgeGroup, isIndustry, isTopic } from "@/domain/search/conditionValues";
+import { isAgeGroup, isIndustry, isTarget, isTopic } from "@/domain/search/conditionValues";
 import { hasConditions, type SearchConditions } from "@/domain/search/conditions";
 import { orgPrefixesOf } from "@/domain/search/districts";
+import { ADULT_TITLE, MINORS_TITLE } from "@/domain/notice/minorsHint";
 
 export interface HomeData {
   notices: Notice[];
   syncedAt: string | null; // 마지막으로 수집에 성공한 시각 (ISO). 기록이 없으면 null
   alwaysNote: string | null; // 상시 열에 붙일 안내 (일부만 보여줄 때)
   isSample: boolean;
+  // 첫 화면 검색창 아래에 둘 많이 찾는 혜택 (출처 조회수 상위). 샘플 데이터처럼 조회수가 없으면 비운다 (예시 검색어를 대신 보여준다)
+  popular: PopularNotice[];
 }
+
+export interface PopularNotice {
+  id: string;
+  title: string;
+}
+
+// 첫 화면에 보여줄 많이 찾는 혜택 수
+export const POPULAR_COUNT = 4;
 
 // 조건에 맞는 상시 혜택을 한 번에 보내는 최대 건수
 export const ALWAYS_LIMIT = 300;
@@ -30,14 +41,22 @@ export async function loadHomeData(
   selectedId: string | null,
   today: IsoDate,
 ): Promise<HomeData> {
-  if (isSampleMode()) return { notices: SAMPLE_NOTICES, syncedAt: SAMPLE_SYNCED_AT, alwaysNote: null, isSample: true };
+  if (isSampleMode()) {
+    return { notices: SAMPLE_NOTICES, syncedAt: SAMPLE_SYNCED_AT, alwaysNote: null, isSample: true, popular: [] };
+  }
 
   const { db } = await import("./client");
   const { notice, syncLog } = await import("./schema");
-  const { and, arrayContains, arrayOverlaps, asc, count, desc, eq, gte, ilike, inArray, isNull, max, ne, or, sql } = await import(
+  const { and, arrayOverlaps, asc, count, desc, eq, gte, ilike, inArray, isNull, max, ne, or, sql } = await import(
     "drizzle-orm"
   );
 
+  // 대상이 미성년자뿐인 공고: AI가 정한 값, 아직 태깅하지 않은 공고는 공고명으로 짐작한 값 (minorsHint.ts)
+  const minorsOnly = sql<boolean>`(${notice.minorsOnly} or (${notice.taggedAt} is null and ${notice.title} ~ ${MINORS_TITLE} and ${notice.title} !~ ${ADULT_TITLE}))`;
+  // 미성년자 전용인데 나이대가 비어 있으면 아동·청소년으로 본다 (어른 나이대로 찾을 때 빠지고, 아동·청소년으로 찾을 때 맞는다)
+  const ageGroups = sql<string[]>`(case when ${minorsOnly} and cardinality(${notice.ageGroups}) = 0 then array['child']::text[] else ${notice.ageGroups} end)`;
+  // 출처 사이트 조회수 (정부24 원본의 "조회수"). 숫자가 아닌 글자는 떼고, 없으면 0
+  const views = sql<number>`coalesce(nullif(regexp_replace(${notice.rawPayload}->>'조회수', '[^0-9]', '', 'g'), '')::int, 0)`.mapWith(Number);
   const columns = {
     id: notice.id,
     source: notice.source,
@@ -50,19 +69,21 @@ export async function loadHomeData(
     detailUrl: notice.detailUrl,
     summaryText: notice.summaryText,
     topics: notice.topics,
-    ageGroups: notice.ageGroups,
+    ageGroups,
     regionCodes: notice.regionCodes,
     industries: notice.industries,
-    minorsOnly: notice.minorsOnly,
+    targets: notice.targets,
+    minorsOnly,
+    views,
   };
   type Row = NoticeRow;
-  type TargetColumn = typeof notice.regionCodes | typeof notice.ageGroups | typeof notice.industries;
+  type TargetColumn = typeof notice.regionCodes | typeof notice.industries | typeof notice.targets | typeof ageGroups;
 
   // 숨김·확인 필요 공고는 보여주지 않는다 (RLS의 공개 규칙과 같다)
   const visible = and(eq(notice.isHidden, false), ne(notice.parseStatus, "check"));
   // 비어 있는 대상 = 전체 대상 (matchNotices와 같은 규칙)
   const allOr = (column: TargetColumn, value: string | null) =>
-    value === null ? undefined : or(sql`cardinality(${column}) = 0`, arrayContains(column, [value]));
+    value === null ? undefined : or(sql`cardinality(${column}) = 0`, sql`${value} = any(${column})`);
   // 기관명이 찾는 시·도 안의 시·군·구인지 ("서울특별시 마포구"). matchNotices·orgDistrictOf와 같은 규칙
   const orgSecond = sql`split_part(${notice.org}, ' ', 2)`;
   const inSidoDistrict =
@@ -77,8 +98,8 @@ export async function loadHomeData(
     inSidoDistrict && conditions.district !== null
       ? sql`not (${inSidoDistrict} and ${orgSecond} <> ${conditions.district})`
       : undefined,
-    allOr(notice.ageGroups, conditions.age),
-    conditions.age === null ? undefined : eq(notice.minorsOnly, false),
+    allOr(ageGroups, conditions.age),
+    allOr(notice.targets, conditions.target),
     allOr(notice.industries, conditions.biz),
     conditions.topics.length > 0 ? arrayOverlaps(notice.topics, conditions.topics) : undefined,
   );
@@ -98,7 +119,8 @@ export async function loadHomeData(
     [
       hit(notice.regionCodes, conditions.region),
       sameDistrict ? sql`(case when ${sameDistrict} then 1 else 0 end)` : sql`0`,
-      hit(notice.ageGroups, conditions.age),
+      hit(ageGroups, conditions.age),
+      hit(notice.targets, conditions.target),
       hit(notice.industries, conditions.biz),
       ...conditions.topics.map((topic) => sql`(case when ${topic} = any(${notice.topics}) then 1 else 0 end)`),
     ],
@@ -108,13 +130,13 @@ export async function loadHomeData(
   // 정렬에 상수를 넣으면 Postgres가 열 번호로 읽으므로, 필요할 때만 넣는다
   const localLast =
     inSidoDistrict && conditions.district === null ? [asc(sql`(case when ${inSidoDistrict} then 1 else 0 end)`)] : [];
-  // 분명히 맞은 혜택을 먼저, 그다음 시·도 전체 혜택, 지역을 콕 집은 혜택, 이름순
+  // 분명히 맞은 혜택을 먼저, 그다음 시·도 전체 혜택, 많이 찾는 혜택(조회수), 이름순 (boardColumns의 상시 열과 같은 순서)
   const alwaysRowsOf = (where: ReturnType<typeof and>) =>
     db
       .select(columns)
       .from(notice)
       .where(where)
-      .orderBy(desc(strength), ...localLast, desc(sql`cardinality(${notice.regionCodes})`), asc(notice.title))
+      .orderBy(desc(strength), ...localLast, desc(views), asc(notice.title))
       .limit(ALWAYS_LIMIT);
   const countOf = async (where: ReturnType<typeof and>) => (await db.select({ n: count() }).from(notice).where(where))[0].n;
 
@@ -139,8 +161,20 @@ export async function loadHomeData(
     return { always, alwaysTotal, picked: true };
   };
   const syncedQuery = db.select({ at: max(syncLog.finishedAt) }).from(syncLog).where(eq(syncLog.ok, true));
+  // 지금 신청할 수 있는(상시이거나 마감 전) 공고 중 조회수 상위. 조회수가 없는 공고(0)는 넣지 않는다
+  const popularQuery = db
+    .select({ id: notice.id, title: notice.title })
+    .from(notice)
+    .where(and(visible, sql`${views} > 0`, or(eq(notice.isAlways, true), isNull(notice.applyEnd), gte(notice.applyEnd, today))))
+    .orderBy(desc(views))
+    .limit(POPULAR_COUNT);
 
-  const [dated, { always, alwaysTotal, picked }, [{ at }]] = await Promise.all([datedQuery, loadAlways(), syncedQuery]);
+  const [dated, { always, alwaysTotal, picked }, [{ at }], popular] = await Promise.all([
+    datedQuery,
+    loadAlways(),
+    syncedQuery,
+    popularQuery,
+  ]);
   const rows: Row[] = [...dated, ...always];
 
   // 링크로 들어온 공고가 위 목록에 없으면(조건 없이 연 상시 혜택 등) 따로 불러 상세 패널이 열리게 한다
@@ -156,7 +190,7 @@ export async function loadHomeData(
     alwaysNote = `${alwaysTotal.toLocaleString()}건 중 ${ALWAYS_LIMIT}건`;
   }
 
-  return { notices: rows.map(toNotice), syncedAt: at ? new Date(at).toISOString() : null, alwaysNote, isSample: false };
+  return { notices: rows.map(toNotice), syncedAt: at ? new Date(at).toISOString() : null, alwaysNote, isSample: false, popular };
 }
 
 interface NoticeRow {
@@ -174,7 +208,9 @@ interface NoticeRow {
   ageGroups: string[];
   regionCodes: string[];
   industries: string[];
+  targets: string[];
   minorsOnly: boolean;
+  views: number;
 }
 
 function toNotice(row: NoticeRow): Notice {
@@ -191,8 +227,10 @@ function toNotice(row: NoticeRow): Notice {
     ageGroups: row.ageGroups.filter(isAgeGroup),
     regionCodes: row.regionCodes,
     industries: row.industries.filter(isIndustry),
+    targets: row.targets.filter(isTarget),
     topics: row.topics.filter(isTopic),
     minorsOnly: row.minorsOnly,
+    views: row.views,
     detailUrl: row.detailUrl,
     sourceName: source.name,
     sourceUrl: source.url,

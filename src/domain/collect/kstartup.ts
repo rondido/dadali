@@ -1,4 +1,4 @@
-// K-Startup 지원사업 공고 → 혜택톡톡 공고 (기획서 13장 다달이 분류 매핑)
+// K-Startup 지원사업 공고 → 혜택모아 공고 (기획서 13장 다달이 분류 매핑)
 import type { AgeGroup, RegionCode, Topic } from "@/domain/search/conditionValues";
 import { contentHashOf } from "./aiTags";
 import { parseCompactDate } from "./dates";
@@ -71,6 +71,7 @@ export function fromKstartup(item: Record<string, unknown>): NoticeRecord {
     topics: unique<Topic>(["startup", ...fields.flatMap((f) => TOPICS_BY_FIELD[f] ?? [])]),
     ageGroups: ageGroupsOf(cleanText(item.biz_trgt_age)),
     regionCodes: regionCodesOf(cleanText(item.supt_regin)),
+    targets: [],
     industries: [],
     rawPayload: item,
     contentHash: contentHashOf("kstartup", item),

@@ -107,7 +107,8 @@ test.describe("보드 공간", () => {
   test("PC에서는 검색·칩·건수를 줄여 보드가 화면의 위쪽 3분의 1 안에서 시작합니다", async ({ page }) => {
     await page.goto("/?region=11&biz=retail");
 
-    const board = (await page.getByRole("region", { name: /^접수 중/ }).boundingBox())!;
+    // 맨 위 구역 (조건에 맞는 상시 혜택이 있으면 상시, 없으면 접수 중)
+    const board = (await page.getByRole("region", { name: /^(상시|접수 중)/ }).first().boundingBox())!;
     expect(board.y).toBeLessThan(page.viewportSize()!.height / 3);
   });
 

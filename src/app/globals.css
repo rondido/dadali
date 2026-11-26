@@ -1,6 +1,6 @@
 @import "tailwindcss";
 
-/* 혜택톡톡 디자인 토큰 */
+/* 혜택모아 디자인 토큰 */
 :root {
   /* 바탕: 페이지는 옅은 푸른색, ground는 패널 안에서 묶어 보여줄 영역의 연한 회색 */
   --background: #f3f6fb;
@@ -14,6 +14,9 @@
   /* 목록에서 선택한 줄: 페이지 바탕(옅은 푸른색)과 구분되도록 틴트보다 한 단계 진하게 */
   --primary-selected: #e1ebfd;
   --on-primary: #ffffff;
+  /* 로고·서비스명 색: 하트와 "모아"는 brand, "혜택"은 brand-ink */
+  --brand: #0a55e0;
+  --brand-ink: #14254a;
 
   --ink: #16181d;
   --ink-2: #3d434e;
@@ -33,6 +36,8 @@
   --color-primary-tint: var(--primary-tint);
   --color-primary-selected: var(--primary-selected);
   --color-on-primary: var(--on-primary);
+  --color-brand: var(--brand);
+  --color-brand-ink: var(--brand-ink);
   --color-ground: var(--ground);
   --color-surface: var(--surface);
   --color-ink: var(--ink);

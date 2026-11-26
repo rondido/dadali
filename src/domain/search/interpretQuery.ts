@@ -1,11 +1,11 @@
 // 자유 입력 문장을 검색 조건으로 바꾸는 사전 규칙 해석 (기획서 5-1장)
 // 사전은 인자로 받는다 (src/data/dictionary.ts: 시·도와 전국 시·군·구, 자주 쓰는 말과 비슷한 말)
-import { isAgeGroup, isIndustry, isRegionCode, isTopic, type AgeGroup, type RegionCode } from "./conditionValues";
+import { isAgeGroup, isIndustry, isRegionCode, isTarget, isTopic, type AgeGroup, type RegionCode } from "./conditionValues";
 import { EMPTY_CONDITIONS, type SearchConditions } from "./conditions";
 
 export interface DictionaryEntry {
   term: string;
-  kind: "region" | "age" | "industry" | "topic";
+  kind: "region" | "age" | "target" | "industry" | "topic";
   value: string;
   // 같은 단어가 가리킬 수 있는 다른 지역 (예: 광주 → 광주광역시 / 경기 광주시)
   ambiguousWith?: string[];
@@ -33,13 +33,18 @@ const STOPWORDS = new Set([
   "지원", "지원금", "지원사업", "사업", "혜택", "정부", "있나요", "있어요", "있을까요", "있는", "받을", "수",
   "하는", "하고", "하려고", "운영", "중", "저", "제가", "나", "내", "가게", "뭐", "어떤", "알려줘", "찾아줘",
   "싶어요", "싶은", "준비", "살", "세", "명", "곳",
+  // 질문형 문장에 자주 쓰는 말과 흔한 오타 ("어르신이 받을 수 잇는 혜택은?")
+  "잇는", "잇나요", "잇어요", "있는지", "뭐가", "무엇", "어떤게", "알려주세요", "받을수", "누가", "대상",
 ]);
 
 // "32살", "65세" → 나이, "40대" → 연령대. 찾은 부분은 문장에서 지운다
 const AGE_YEARS = /(\d{1,3})\s*(?:살|세)/;
 const AGE_DECADE = /([1-9])0\s*대/;
+// 단위 없이 홀로 쓴 두 자리 수("30", "청년 28")도 나이로 본다. "30만원", "2030"처럼 붙거나 긴 수는 아니다
+const AGE_BARE = /(?<![\p{L}\p{N}])([1-9]\d)(?![\p{L}\p{N}])/u;
 
 function ageFromYears(years: number): AgeGroup {
+  if (years < 19) return "child";
   if (years < 40) return "youth";
   if (years < 65) return "middle";
   return "senior";
@@ -50,6 +55,9 @@ function takeNumericAge(text: string): { age: AgeGroup | null; rest: string } {
   if (years) return { age: ageFromYears(Number(years[1])), rest: text.replace(years[0], " ") };
   const decade = text.match(AGE_DECADE);
   if (decade) return { age: ageFromYears(Number(decade[1]) * 10), rest: text.replace(decade[0], " ") };
+  const bare = text.match(AGE_BARE);
+  // 19 미만은 "10 창업"처럼 개수일 때가 많아 단위("살", "세")를 붙였을 때만 나이로 본다
+  if (bare && Number(bare[1]) >= 19) return { age: ageFromYears(Number(bare[1])), rest: text.replace(bare[0], " ") };
   return { age: null, rest: text };
 }
 
@@ -113,6 +121,8 @@ export function interpretQuery(text: string, dictionary: DictionaryEntry[]): Int
       // "32살인데"에서 나이를 지우고 남은 "인데"처럼 조사·어미만 남은 조각은 버린다
       if (ENDINGS.includes(word)) continue;
       const stem = stripEnding(word);
+      // 숫자만인 조각("2026", "100")은 공고명 검색에 쓰면 엉뚱한 공고가 걸리므로 버린다
+      if (/^\d+$/.test(stem)) continue;
       if (stem.length >= 2 && !STOPWORDS.has(stem) && !STOPWORDS.has(word) && !unknownTerms.includes(stem)) {
         unknownTerms.push(stem);
       }
@@ -121,6 +131,7 @@ export function interpretQuery(text: string, dictionary: DictionaryEntry[]): Int
     for (const entry of entries) {
       if (entry.kind === "region") addRegion(entry);
       if (entry.kind === "age" && conditions.age === null && isAgeGroup(entry.value)) conditions.age = entry.value;
+      if (entry.kind === "target" && conditions.target === null && isTarget(entry.value)) conditions.target = entry.value;
       if (entry.kind === "industry" && conditions.biz === null && isIndustry(entry.value)) conditions.biz = entry.value;
       if (entry.kind === "topic" && isTopic(entry.value) && !conditions.topics.includes(entry.value)) {
         conditions.topics.push(entry.value);

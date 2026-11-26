@@ -22,7 +22,7 @@ describe("interpretQuery", () => {
     const result = interpretQuery("서울에서 카페 하는 32살인데 가게 인테리어 지원 있나요?", DICTIONARY);
 
     expect(result).toEqual({
-      conditions: { region: "11", district: null, age: "youth", biz: "retail", topics: ["facility"] },
+      conditions: { region: "11", district: null, age: "youth", target: null, biz: "retail", topics: ["facility"] },
       regionChoices: [],
       unknownTerms: [],
     });
@@ -31,7 +31,7 @@ describe("interpretQuery", () => {
   it("짧은 문장은 찾은 조건만 채우고 나머지는 비워 둡니다", () => {
     const result = interpretQuery("창업 지원금", DICTIONARY);
 
-    expect(result.conditions).toEqual({ region: null, district: null, age: null, biz: null, topics: ["startup"] });
+    expect(result.conditions).toEqual({ region: null, district: null, age: null, target: null, biz: null, topics: ["startup"] });
   });
 
   it("동 이름은 그 동이 속한 시·도로 바꿉니다", () => {
@@ -55,12 +55,34 @@ describe("interpretQuery", () => {
       ["70살", "senior"],
       ["40대", "middle"],
       ["20대", "youth"],
+      ["17살", "child"],
+      ["7세", "child"],
+      ["10대", "child"],
     ])('"%s"는 %s 나이대로 바꿉니다', (text, expected) => {
       expect(interpretQuery(text, DICTIONARY).conditions.age).toBe(expected);
     });
 
     it("숫자로 적은 나이가 나이대 단어보다 먼저입니다", () => {
       expect(interpretQuery("청년인데 45살", DICTIONARY).conditions.age).toBe("middle");
+    });
+
+    test.each([
+      ["30", "youth"],
+      ["서울 52 창업", "middle"],
+      ["카페 67", "senior"],
+    ])('단위 없이 홀로 쓴 두 자리 수 "%s"도 나이로 봅니다', (text, expected) => {
+      const result = interpretQuery(text, DICTIONARY);
+      expect(result.conditions.age).toBe(expected);
+      expect(result.unknownTerms).toEqual([]);
+    });
+
+    it("다른 글자와 붙었거나 19 미만이거나 긴 수는 나이로 보지 않고, 숫자만인 조각은 단어 검색에도 쓰지 않습니다", () => {
+      for (const text of ["30만원 대출", "2030 청년", "10 창업", "1인 가구"]) {
+        const result = interpretQuery(text, DICTIONARY);
+        expect(result.conditions.age === null || text.includes("청년"), text).toBe(true);
+        expect(result.unknownTerms.some((t) => /^\d+$/.test(t)), text).toBe(false);
+      }
+      expect(interpretQuery("2030 청년", DICTIONARY).conditions.age).toBe("youth");
     });
   });
 

@@ -12,7 +12,24 @@ import {
   type SearchConditions,
 } from "./conditions";
 
-const FULL: SearchConditions = { region: "11", district: null, age: "youth", biz: "retail", topics: ["facility", "fund"] };
+const FULL: SearchConditions = {
+  region: "11",
+  district: null,
+  age: "youth",
+  target: null,
+  biz: "retail",
+  topics: ["facility", "fund"],
+};
+
+describe("아동·청소년 나이대", () => {
+  it("주소의 age=child를 아동·청소년 칩으로 읽고 다시 주소로 씁니다", () => {
+    const conditions = conditionsFromParams(new URLSearchParams("age=child"));
+
+    expect(conditions.age).toBe("child");
+    expect(toChips(conditions).map(chipLabel)).toEqual(["아동·청소년"]);
+    expect(conditionsToParams(conditions).toString()).toBe("age=child");
+  });
+});
 
 describe("시·군·구 조건", () => {
   const mapo: SearchConditions = { ...EMPTY_CONDITIONS, region: "11", district: "마포구" };
@@ -77,7 +94,7 @@ describe("conditionsToParams / conditionsFromParams", () => {
   it("알 수 없는 값은 버리고 읽습니다", () => {
     const params = new URLSearchParams("region=99&age=kid&biz=retail&topic=facility,unknown");
 
-    expect(conditionsFromParams(params)).toEqual({ region: null, district: null, age: null, biz: "retail", topics: ["facility"] });
+    expect(conditionsFromParams(params)).toEqual({ region: null, district: null, age: null, target: null, biz: "retail", topics: ["facility"] });
   });
 });
 
@@ -118,5 +135,19 @@ describe("withChip", () => {
 
   it("이미 있는 관심 주제를 더하면 그대로 둡니다", () => {
     expect(withChip(FULL, { kind: "topic", value: "fund" })).toBe(FULL);
+  });
+});
+
+describe("대상(가구 상황) 조건", () => {
+  it("주소의 target을 대상 칩으로 읽고 다시 주소로 씁니다", () => {
+    const conditions = conditionsFromParams(new URLSearchParams("target=disabled"));
+    expect(conditions.target).toBe("disabled");
+    expect(toChips(conditions)).toEqual([{ kind: "target", value: "disabled" }]);
+    expect(chipLabel({ kind: "target", value: "disabled" })).toBe("장애인");
+    expect(conditionsToParams(conditions).toString()).toBe("target=disabled");
+  });
+
+  it("알 수 없는 대상은 버립니다", () => {
+    expect(conditionsFromParams(new URLSearchParams("target=alien")).target).toBeNull();
   });
 });

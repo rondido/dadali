@@ -85,11 +85,26 @@ describe("matchNotices", () => {
     });
   });
 
-  it("미성년자 전용 공고는 나이대 조건이 있을 때 빠지고, 없을 때는 보입니다", () => {
+  it("미성년자 전용 공고는 어른 나이대로 찾을 때 빠지고, 아동·청소년으로 찾거나 나이 조건이 없으면 보입니다", () => {
     const notices = [noticeOf({ id: "kids", minorsOnly: true }), noticeOf({ id: "all" })];
 
     expect(idsOf(notices, { ...EMPTY_CONDITIONS, age: "youth" })).toEqual(["all"]);
+    expect(idsOf(notices, { ...EMPTY_CONDITIONS, age: "child" })).toEqual(["kids", "all"]);
     expect(idsOf(notices)).toEqual(["kids", "all"]);
+  });
+
+  it("아동·청소년으로 찾으면 아동·청소년 공고를 맞음으로 표시하고 어른 나이대 공고는 뺍니다", () => {
+    const notices = [
+      noticeOf({ id: "scholarship", ageGroups: ["child", "youth"] }),
+      noticeOf({ id: "youth", ageGroups: ["youth"] }),
+      noticeOf({ id: "all" }),
+    ];
+    const { matches } = matchNotices(notices, { ...EMPTY_CONDITIONS, age: "child" });
+
+    expect(matches.map((m) => [m.notice.id, m.reasons, m.strength])).toEqual([
+      ["scholarship", ["아동·청소년"], 1],
+      ["all", [], 0],
+    ]);
   });
 
   it("조건이 없으면 모든 공고를 태그 없이 반환합니다", () => {
@@ -176,5 +191,30 @@ describe("matchNotices", () => {
       expect(result.matches).toHaveLength(3);
       expect(result.usedKeywords).toEqual([]);
     });
+  });
+});
+
+describe("대상(가구 상황) 조건", () => {
+  const forDisabled = noticeOf({ id: "disabled", targets: ["disabled"] });
+  const forLowIncome = noticeOf({ id: "lowincome", targets: ["lowincome", "disabled"] });
+  const forSingleParent = noticeOf({ id: "single", targets: ["singleparent"] });
+  const forEveryone = noticeOf({ id: "everyone" });
+
+  it("대상이 정해진 공고는 그 대상으로 찾을 때만, 대상이 빈 공고는 누구나 대상으로 통과합니다", () => {
+    const conditions = { ...EMPTY_CONDITIONS, target: "disabled" as const };
+    expect(idsOf([forDisabled, forLowIncome, forSingleParent, forEveryone], conditions)).toEqual([
+      "disabled",
+      "lowincome",
+      "everyone",
+    ]);
+  });
+
+  it("대상과 분명히 맞은 공고만 강도에 셉니다", () => {
+    const conditions = { ...EMPTY_CONDITIONS, target: "disabled" as const };
+    const { matches } = matchNotices([forDisabled, forEveryone], conditions);
+    expect(matches.map((m) => [m.notice.id, m.strength, m.reasons])).toEqual([
+      ["disabled", 1, ["장애인"]],
+      ["everyone", 0, []],
+    ]);
   });
 });

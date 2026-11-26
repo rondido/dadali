@@ -1,6 +1,6 @@
 // 수집한 공고를 DB(notice 테이블)에 넣기 전 모양. 변환 규칙(kstartup.ts, gov24.ts)이 만들고 수집 스크립트가 저장한다
 import type { IsoDate } from "@/domain/notice/notice";
-import type { AgeGroup, Industry, RegionCode, Topic } from "@/domain/search/conditionValues";
+import type { AgeGroup, Industry, RegionCode, Target, Topic } from "@/domain/search/conditionValues";
 
 export interface NoticeRecord {
   source: "kstartup" | "gov24";
@@ -17,6 +17,7 @@ export interface NoticeRecord {
   topics: Topic[];
   ageGroups: AgeGroup[];
   regionCodes: RegionCode[];
+  targets: Target[]; // 대상(가구 상황). 변환 규칙은 비워 두고 AI 태깅이 채운다
   industries: Industry[];
   rawPayload: Record<string, unknown>;
   contentHash: string; // 태깅에 쓰는 원문 필드의 지문 (aiTags.ts)

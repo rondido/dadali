@@ -201,6 +201,7 @@ export default function NoticePanel({ notice, today, syncedAt, onClose, loading 
               <dl aria-label="대상" className="flex flex-col gap-4 bg-ground p-5 text-sm">
                 <TargetRow label="지역" values={targets.regions} />
                 <TargetRow label="나이대" values={targets.ages} />
+                <TargetRow label="대상" values={targets.targets} />
                 <TargetRow label="업종" values={targets.industries} />
                 <TargetRow label="주제" values={targets.topics} />
               </dl>

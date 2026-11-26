@@ -1,4 +1,4 @@
-// 행정안전부 공공서비스(혜택) → 혜택톡톡 공고 (기획서 13장 다달이 분류 매핑)
+// 행정안전부 공공서비스(혜택) → 혜택모아 공고 (기획서 13장 다달이 분류 매핑)
 // 공고가 아니라 늘 운영되는 서비스 목록이라 대부분 날짜가 없다. 날짜가 확실한 것만 기간으로, 나머지는 상시로 둔다
 import type { AgeGroup, Industry, Topic } from "@/domain/search/conditionValues";
 import { contentHashOf } from "./aiTags";
@@ -73,6 +73,7 @@ export function fromGov24(item: Record<string, unknown>): NoticeRecord {
     ]),
     ageGroups: ageGroupsOf(cleanText(item["지원대상"])),
     regionCodes: sidoCodesOfOrg(org),
+    targets: [],
     industries: fields.includes("농림축산어업") ? (["agri"] satisfies Industry[]) : [],
     rawPayload: item,
     contentHash: contentHashOf("gov24", item),
