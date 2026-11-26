@@ -6,15 +6,18 @@
 // 한 묶음 안의 줄은 간격 없이 이어 붙이고 얇은 가로선으로만 나눠, 카드 더미가 아니라 하나의 목록으로 읽히게 한다.
 // 구역 이름은 목록을 내려도 위에 붙어 있어, 지금 어느 구역을 보는지 글 없이 알 수 있다
 // 상시는 수가 많아 접수 중 공고를 묻히게 하므로 앞의 몇 건만 보이고 접어 둔다 (펼치기를 누르면 다른 구역처럼 더보기, 다시 접을 수 있다)
+// 검색 조건과 분명히 맞은 공고가 있으면 구역마다 처음에는 그 공고들만 보인다. 대상이 비어 통과한 공고는 더보기를 눌러야 보인다
 import { useState } from "react";
 import NoticeRow from "@/components/board/NoticeRow";
 import { sectionOrderOf, type BoardCard, type BoardColumn, type BoardColumnKey } from "@/hooks/board/boardColumns";
-import { LOAD_MORE_STEP, sectionLimit, visibleCards } from "@/hooks/board/visibleCards";
+import { boardHasMatched, LOAD_MORE_STEP, matchedSectionsFirst, sectionLimit, visibleCards } from "@/hooks/board/visibleCards";
 
 interface StatusBoardProps {
   columns: BoardColumn[];
   recommendedIds: ReadonlySet<string>;
   alwaysNote?: string | null;
+  // 맞춤순일 때만 분명히 맞은 공고가 구역 앞에 모이므로, 그때만 나머지를 접는다 (마감순은 순서대로 다 보여준다)
+  matchOrder?: boolean;
   selectedId: string | null;
   viewedIds: ReadonlySet<string>;
   savedIds: ReadonlySet<string>;
@@ -39,6 +42,7 @@ export default function StatusBoard({
   columns,
   recommendedIds,
   alwaysNote = null,
+  matchOrder = true,
   selectedId,
   viewedIds,
   savedIds,
@@ -47,7 +51,9 @@ export default function StatusBoard({
   const [loadMore, setLoadMore] = useState<Partial<Record<BoardColumnKey, number>>>({});
   // 상시 구역은 앞의 몇 건만 보이고 접혀 있다가, 펼치기를 누르면 다른 구역처럼 더보기로 넘겨 본다
   const [alwaysExpanded, setAlwaysExpanded] = useState(false);
-  const sections = sectionOrderOf(columns);
+  // 조건과 분명히 맞은 공고가 있으면, 각 구역은 처음에 그 공고들만 보이고 "누구나 대상"으로 통과한 공고는 더보기 뒤로 접는다
+  const foldUnmatched = matchOrder && boardHasMatched(columns);
+  const sections = foldUnmatched ? matchedSectionsFirst(sectionOrderOf(columns)) : sectionOrderOf(columns);
   // 먼저 보기 공고와 지금 열어 둔 공고는 접혀서 안 보이는 일이 없게 한다
   const pinnedIds = new Set(recommendedIds);
   if (selectedId) pinnedIds.add(selectedId);
@@ -57,14 +63,14 @@ export default function StatusBoard({
       {sections.map((column) => {
         const clicks = loadMore[column.key] ?? 0;
         const collapsed = column.key === "always" && !alwaysExpanded;
-        const visible = visibleCards(column.cards, sectionLimit(column.key, clicks, alwaysExpanded), pinnedIds);
+        const visible = visibleCards(column.cards, sectionLimit(column.key, clicks, alwaysExpanded, column.cards, foldUnmatched), pinnedIds);
         // 방금 더보기로 펼친 줄 (처음부터 보이던 줄은 움직이지 않는다). 떠오르는 순서는 위에서부터, 너무 길어지지 않게 10줄까지만 늦춘다
         // 상시를 막 펼쳤을 때는 접혀 있던 몇 건 뒤로 새로 보인 줄이 떠오른다
         const before =
           clicks > 0
-            ? visibleCards(column.cards, sectionLimit(column.key, clicks - 1, alwaysExpanded), pinnedIds)
+            ? visibleCards(column.cards, sectionLimit(column.key, clicks - 1, alwaysExpanded, column.cards, foldUnmatched), pinnedIds)
             : column.key === "always" && alwaysExpanded
-              ? visibleCards(column.cards, sectionLimit(column.key, 0, false), pinnedIds)
+              ? visibleCards(column.cards, sectionLimit(column.key, 0, false, column.cards, foldUnmatched), pinnedIds)
               : visible;
         const revealedOrder = new Map(
           visible.filter((card) => !before.includes(card)).map((card, i) => [card.match.notice.id, Math.min(i, 10)]),

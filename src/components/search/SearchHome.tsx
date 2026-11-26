@@ -580,6 +580,7 @@ export default function SearchHome({
                   columns={columns}
                   recommendedIds={recommendedIds}
                   alwaysNote={alwaysNote}
+                  matchOrder={order === "match"}
                   selectedId={search.selectedNoticeId}
                   viewedIds={memory.viewedIds}
                   savedIds={memory.savedIds}
