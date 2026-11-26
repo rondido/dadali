@@ -6,6 +6,7 @@ import { sourceInfoOf } from "@/domain/notice/sources";
 import { isAgeGroup, isIndustry, isTopic } from "@/domain/search/conditionValues";
 import { hasConditions, type SearchConditions } from "@/domain/search/conditions";
 import { orgPrefixesOf } from "@/domain/search/districts";
+import { ADULT_TITLE, MINORS_TITLE } from "@/domain/notice/minorsHint";
 
 export interface HomeData {
   notices: Notice[];
@@ -34,10 +35,14 @@ export async function loadHomeData(
 
   const { db } = await import("./client");
   const { notice, syncLog } = await import("./schema");
-  const { and, arrayContains, arrayOverlaps, asc, count, desc, eq, gte, ilike, inArray, isNull, max, ne, or, sql } = await import(
+  const { and, arrayOverlaps, asc, count, desc, eq, gte, ilike, inArray, isNull, max, ne, or, sql } = await import(
     "drizzle-orm"
   );
 
+  // 대상이 미성년자뿐인 공고: AI가 정한 값, 아직 태깅하지 않은 공고는 공고명으로 짐작한 값 (minorsHint.ts)
+  const minorsOnly = sql<boolean>`(${notice.minorsOnly} or (${notice.taggedAt} is null and ${notice.title} ~ ${MINORS_TITLE} and ${notice.title} !~ ${ADULT_TITLE}))`;
+  // 미성년자 전용인데 나이대가 비어 있으면 아동·청소년으로 본다 (어른 나이대로 찾을 때 빠지고, 아동·청소년으로 찾을 때 맞는다)
+  const ageGroups = sql<string[]>`(case when ${minorsOnly} and cardinality(${notice.ageGroups}) = 0 then array['child']::text[] else ${notice.ageGroups} end)`;
   const columns = {
     id: notice.id,
     source: notice.source,
@@ -50,19 +55,19 @@ export async function loadHomeData(
     detailUrl: notice.detailUrl,
     summaryText: notice.summaryText,
     topics: notice.topics,
-    ageGroups: notice.ageGroups,
+    ageGroups,
     regionCodes: notice.regionCodes,
     industries: notice.industries,
-    minorsOnly: notice.minorsOnly,
+    minorsOnly,
   };
   type Row = NoticeRow;
-  type TargetColumn = typeof notice.regionCodes | typeof notice.ageGroups | typeof notice.industries;
+  type TargetColumn = typeof notice.regionCodes | typeof notice.industries | typeof ageGroups;
 
   // 숨김·확인 필요 공고는 보여주지 않는다 (RLS의 공개 규칙과 같다)
   const visible = and(eq(notice.isHidden, false), ne(notice.parseStatus, "check"));
   // 비어 있는 대상 = 전체 대상 (matchNotices와 같은 규칙)
   const allOr = (column: TargetColumn, value: string | null) =>
-    value === null ? undefined : or(sql`cardinality(${column}) = 0`, arrayContains(column, [value]));
+    value === null ? undefined : or(sql`cardinality(${column}) = 0`, sql`${value} = any(${column})`);
   // 기관명이 찾는 시·도 안의 시·군·구인지 ("서울특별시 마포구"). matchNotices·orgDistrictOf와 같은 규칙
   const orgSecond = sql`split_part(${notice.org}, ' ', 2)`;
   const inSidoDistrict =
@@ -77,8 +82,7 @@ export async function loadHomeData(
     inSidoDistrict && conditions.district !== null
       ? sql`not (${inSidoDistrict} and ${orgSecond} <> ${conditions.district})`
       : undefined,
-    allOr(notice.ageGroups, conditions.age),
-    conditions.age === null ? undefined : eq(notice.minorsOnly, false),
+    allOr(ageGroups, conditions.age),
     allOr(notice.industries, conditions.biz),
     conditions.topics.length > 0 ? arrayOverlaps(notice.topics, conditions.topics) : undefined,
   );
@@ -98,7 +102,7 @@ export async function loadHomeData(
     [
       hit(notice.regionCodes, conditions.region),
       sameDistrict ? sql`(case when ${sameDistrict} then 1 else 0 end)` : sql`0`,
-      hit(notice.ageGroups, conditions.age),
+      hit(ageGroups, conditions.age),
       hit(notice.industries, conditions.biz),
       ...conditions.topics.map((topic) => sql`(case when ${topic} = any(${notice.topics}) then 1 else 0 end)`),
     ],

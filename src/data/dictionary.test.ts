@@ -55,6 +55,25 @@ describe("해석 사전", () => {
     expect(read("박람회 참가").conditions.topics).toEqual(["market"]);
   });
 
+  it("아이·학생을 가리키는 말은 아동·청소년 나이대로 봅니다", () => {
+    for (const text of ["청소년 장학금", "초등학생 돌봄", "고등학생 교복", "자녀 교육비", "영유아 보육", "아동수당"]) {
+      expect(read(text).conditions.age, text).toBe("child");
+    }
+  });
+
+  it("아동·청소년 말과 앞부분이 같은 낱말은 나이로 보지 않습니다 (아이디어, 대학생)", () => {
+    expect(read("아이디어 창업").conditions.age).toBeNull();
+    expect(read("대학생 장학금").conditions.age).toBe("youth");
+  });
+
+  it("질문형 문장과 흔한 오타는 못 알아들은 단어로 남기지 않습니다", () => {
+    for (const text of ["Q. 어르신들이 받을 수 잇는 혜택은?", "청년이 받을수 있는지 알려주세요"]) {
+      const result = read(text);
+      expect(result.conditions.age, text).not.toBeNull();
+      expect(result.unknownTerms, text).toEqual([]);
+    }
+  });
+
   it("더 긴 사전 단어를 먼저 고릅니다 (스마트스토어는 디지털이 아니라 도소매)", () => {
     expect(read("스마트스토어").conditions).toMatchObject({ biz: "retail", topics: [] });
     expect(read("보증금").conditions.topics).toEqual(["house"]);

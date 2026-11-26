@@ -14,6 +14,16 @@ import {
 
 const FULL: SearchConditions = { region: "11", district: null, age: "youth", biz: "retail", topics: ["facility", "fund"] };
 
+describe("아동·청소년 나이대", () => {
+  it("주소의 age=child를 아동·청소년 칩으로 읽고 다시 주소로 씁니다", () => {
+    const conditions = conditionsFromParams(new URLSearchParams("age=child"));
+
+    expect(conditions.age).toBe("child");
+    expect(toChips(conditions).map(chipLabel)).toEqual(["아동·청소년"]);
+    expect(conditionsToParams(conditions).toString()).toBe("age=child");
+  });
+});
+
 describe("시·군·구 조건", () => {
   const mapo: SearchConditions = { ...EMPTY_CONDITIONS, region: "11", district: "마포구" };
 

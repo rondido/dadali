@@ -39,8 +39,8 @@ export const linkStatusEnum = pgEnum("link_status", ["ok", "broken"]);
 export const dictionaryKindEnum = pgEnum("dictionary_kind", ["region", "age", "industry", "topic"]);
 export const dictionarySourceEnum = pgEnum("dictionary_source", ["bjd", "ksic", "manual"]); // 법정동코드 · 표준산업분류 · 직접 입력
 
-// 나이대 3개 그룹 (7-1장)
-export const AGE_GROUPS = ["youth", "middle", "senior"] as const;
+// 나이대 4개 그룹 (7-1장, 아동·청소년 추가). 화면의 src/domain/search/conditionValues.ts AGE_GROUPS와 같은 값
+export const AGE_GROUPS = ["child", "youth", "middle", "senior"] as const;
 
 // 업종 묶음 (7-1장, 사업자일 때만)
 export const INDUSTRIES = ["mfg", "it", "retail", "agri", "culture", "etc"] as const;
