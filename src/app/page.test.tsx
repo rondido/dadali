@@ -38,7 +38,7 @@ describe("HomeView", () => {
   it("첫 화면에는 서비스명과 검색창, 예시 검색어만 보여줍니다", () => {
     renderHome();
 
-    expect(screen.getByRole("heading", { level: 1, name: "다람이" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { level: 1, name: "혜택모아" })).toBeInTheDocument();
     expect(screen.getByRole("searchbox", { name: "내 상황" })).toBeInTheDocument();
     expect(screen.getByRole("list", { name: "예시 검색어" })).toBeInTheDocument();
     expect(screen.queryByRole("article")).not.toBeInTheDocument();

@@ -34,7 +34,7 @@ test.describe("입력 전 첫 화면", () => {
 
     await expect(chips(page)).toHaveText([/주제\s*창업/]);
     await expect(page.getByRole("region", { name: /^접수 중/ })).toBeVisible();
-    await expect(page.getByRole("link", { name: "다람이 첫 화면으로" })).toBeVisible();
+    await expect(page.getByRole("link", { name: "혜택모아 첫 화면으로" })).toBeVisible();
   });
 
   test("입력 지우기 버튼은 글자를 적었을 때만 나타나고, 누르면 비운 뒤 입력창에 초점을 둡니다", async ({ page }) => {
@@ -112,8 +112,8 @@ test.describe("대표 시나리오 검색", () => {
     await expect(chips(page)).toHaveCount(4);
   });
 
-  test("다람이를 누르면 저장된 조건을 지우고 첫 화면으로 돌아갑니다", async ({ page }) => {
-    await page.getByRole("link", { name: "다람이 첫 화면으로" }).click();
+  test("혜택모아를 누르면 저장된 조건을 지우고 첫 화면으로 돌아갑니다", async ({ page }) => {
+    await page.getByRole("link", { name: "혜택모아 첫 화면으로" }).click();
 
     await expect(page).toHaveURL(/\/$/);
     await expect(page.getByRole("button", { name: "지원사업 찾기" })).toBeVisible();
@@ -126,11 +126,11 @@ test.describe("대표 시나리오 검색", () => {
 
 });
 
-test("전체 지원사업 보기에서 다람이를 누르면 첫 화면으로 돌아갑니다", async ({ page }) => {
+test("전체 지원사업 보기에서 혜택모아를 누르면 첫 화면으로 돌아갑니다", async ({ page }) => {
   await page.getByRole("button", { name: "전체 지원사업 보기" }).click();
   await expect(resultTitle(page)).toContainText("전체 지원사업");
 
-  await page.getByRole("link", { name: "다람이 첫 화면으로" }).click();
+  await page.getByRole("link", { name: "혜택모아 첫 화면으로" }).click();
 
   await expect(page.getByRole("button", { name: "지원사업 찾기" })).toBeVisible();
 });

@@ -1,4 +1,4 @@
--- 다람이 기본 데이터. rls.sql 다음에 Supabase > SQL Editor에서 실행하세요. 여러 번 실행해도 되며, 다시 실행하면 아래 값으로 덮어씁니다.
+-- 혜택모아 기본 데이터. rls.sql 다음에 Supabase > SQL Editor에서 실행하세요. 여러 번 실행해도 되며, 다시 실행하면 아래 값으로 덮어씁니다.
 
 -- 분류 (기획서 4장)
 insert into category (id, name, color_token) values

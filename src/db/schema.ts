@@ -1,4 +1,4 @@
-// 다람이 DB 스키마 (기획서 8장 데이터 정의서 기준)
+// 혜택모아 DB 스키마 (기획서 8장 데이터 정의서 기준)
 // pg_trgm 확장이 필요하다. 처음 만들 때는 supabase/extensions.sql을 먼저 실행한 뒤 npm run db:push
 import { sql } from "drizzle-orm";
 import {
