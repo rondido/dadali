@@ -120,6 +120,7 @@ async function collect(source: SourceName) {
             ageGroups: keepAiTag("age_groups"),
             regionCodes: keepAiTag("region_codes"),
             industries: keepAiTag("industries"),
+            targets: keepAiTag("targets"),
             minorsOnly: keepAiTag("minors_only"),
             rawPayload: sql`excluded.raw_payload`,
             contentHash: sql`excluded.content_hash`,

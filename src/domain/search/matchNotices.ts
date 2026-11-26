@@ -2,14 +2,14 @@
 // 조건 사이는 "그리고", 관심 주제끼리는 "또는". 대상·지역·업종이 비어 있는 공고는 전체 대상으로 보고 통과시킨다
 // 시·군·구를 정하면 같은 시·도의 다른 시·군·구 기관 공고(대개 그 주민만 대상)를 뺀다. 시·군·구는 기관명에서 읽는다
 import type { Notice } from "@/domain/notice/notice";
-import { ageLabel, industryLabel, regionLabel, topicLabel } from "./conditionValues";
+import { ageLabel, industryLabel, regionLabel, targetLabel, topicLabel } from "./conditionValues";
 import type { SearchConditions } from "./conditions";
 import { orgDistrictOf } from "./districts";
 
 export interface NoticeMatch {
   notice: Notice;
   reasons: string[]; // 예: ["서울", "시설·인테리어"]
-  // 조건과 태그로 분명히 맞은 개수 (지역·나이대·하는 일 각 1, 맞은 주제마다 1). 대상이 비어 통과한 것은 세지 않는다
+  // 조건과 태그로 분명히 맞은 개수 (지역·나이대·대상·하는 일 각 1, 맞은 주제마다 1). 대상이 비어 통과한 것은 세지 않는다
   // 보드 열 안에서 분명히 맞은 공고를 먼저 보여주는 데 쓴다. 관심·최근 공고처럼 검색과 무관한 목록은 없다(0)
   strength?: number;
   // 시·도로만 찾았을 때 시·군·구 기관의 공고 (시·도 전체·전국 공고 뒤에 보여준다)
@@ -45,13 +45,15 @@ function matchConditions(notice: Notice, conditions: SearchConditions): string[]
   // 미성년자 전용 공고는 어른 나이대(청년·중장년·어르신)로 찾을 때 대상이 아니다
   if (conditions.age !== null && conditions.age !== "child" && notice.minorsOnly) return null;
   const age = checkOne(conditions.age, notice.ageGroups, ageLabel);
+  // 대상(가구 상황)이 정해진 공고는 그 대상으로 찾을 때만, 비어 있으면 누구나 대상으로 통과한다 (나이대와 같은 규칙)
+  const target = checkOne(conditions.target, notice.targets ?? [], targetLabel);
   const biz = checkOne(conditions.biz, notice.industries, industryLabel);
-  if (!region || !age || !biz) return null;
+  if (!region || !age || !target || !biz) return null;
 
   const topics = conditions.topics.filter((t) => notice.topics.includes(t));
   if (conditions.topics.length > 0 && topics.length === 0) return null;
 
-  return [...region, ...age, ...biz, ...topics.map(topicLabel)];
+  return [...region, ...age, ...target, ...biz, ...topics.map(topicLabel)];
 }
 
 // 통과한 공고가 조건과 태그로 분명히 맞은 개수
@@ -61,6 +63,7 @@ export function strengthOf(notice: Notice, conditions: SearchConditions): number
     hits(conditions.region, notice.regionCodes) +
     (conditions.district !== null && districtRelation(notice, conditions) === "same" ? 1 : 0) +
     hits(conditions.age, notice.ageGroups) +
+    hits(conditions.target, notice.targets ?? []) +
     hits(conditions.biz, notice.industries) +
     conditions.topics.filter((t) => notice.topics.includes(t)).length
   );

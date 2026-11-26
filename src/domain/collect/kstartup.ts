@@ -71,6 +71,7 @@ export function fromKstartup(item: Record<string, unknown>): NoticeRecord {
     topics: unique<Topic>(["startup", ...fields.flatMap((f) => TOPICS_BY_FIELD[f] ?? [])]),
     ageGroups: ageGroupsOf(cleanText(item.biz_trgt_age)),
     regionCodes: regionCodesOf(cleanText(item.supt_regin)),
+    targets: [],
     industries: [],
     rawPayload: item,
     contentHash: contentHashOf("kstartup", item),

@@ -5,6 +5,7 @@ const tags = (over: Partial<AiTags> = {}): AiTags => ({
   regions: [],
   ages: [],
   minors_only: false,
+  targets: [],
   industries: [],
   topics: [],
   ...over,
@@ -62,5 +63,11 @@ describe("tagModelOf", () => {
   it("기간 있는 공고는 정확한 모델, 상시 혜택은 저렴한 모델을 씁니다", () => {
     expect(tagModelOf(false)).toBe("claude-opus-5-5");
     expect(tagModelOf(true)).toBe("claude-haiku-5-5");
+  });
+});
+
+describe("대상(가구 상황) 태그", () => {
+  it("중복을 없애고 정렬해 저장합니다", () => {
+    expect(normalizeAiTags(tags({ targets: ["lowincome", "disabled", "lowincome"] })).targets).toEqual(["disabled", "lowincome"]);
   });
 });

@@ -83,6 +83,8 @@ export const notice = pgTable(
     regionCodes: text("region_codes").array().notNull().default([]), // 시·도 코드 (법정동 앞 2자리)
     sigunguCode: text("sigungu_code"), // 예약 필드, 화면 미사용
     industries: text("industries").array().notNull().default([]),
+    // 대상(가구 상황: TARGETS). 장애인·저소득처럼 신청 자격이 특정 처지로 정해질 때만, AI 태깅이 채운다
+    targets: text("targets").array().notNull().default([]),
 
     // 운영
     isHidden: boolean("is_hidden").notNull().default(false),
