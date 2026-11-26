@@ -9,6 +9,7 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode }
 import NoticeRow from "@/components/board/NoticeRow";
 import StatusBoard from "@/components/board/StatusBoard";
 import NoticePanel from "@/components/notice/NoticePanel";
+import type { PopularNotice } from "@/db/homeData";
 import ConditionBar from "@/components/search/ConditionBar";
 import ConditionPicker from "@/components/search/ConditionPicker";
 import SearchBox from "@/components/search/SearchBox";
@@ -60,9 +61,17 @@ interface SearchHomeProps {
   syncedAt: string | null; // 데이터 최종 갱신 시각 (ISO). 수집 기록이 없으면 null
   alwaysNote?: string | null; // 상시 열 안내 (상시 혜택을 일부만 보낼 때)
   isSample?: boolean; // 샘플 데이터로 그리는 중 (첫 화면 고지에 함께 알린다)
+  popular?: PopularNotice[]; // 첫 화면에 둘 많이 찾는 혜택 (없으면 예시 검색어)
 }
 
-export default function SearchHome({ notices, dictionary, syncedAt, alwaysNote = null, isSample = false }: SearchHomeProps) {
+export default function SearchHome({
+  notices,
+  dictionary,
+  syncedAt,
+  alwaysNote = null,
+  isSample = false,
+  popular = [],
+}: SearchHomeProps) {
   const today = useSeoulToday();
   const search = useSearch(dictionary);
   const toast = useToast();
@@ -479,7 +488,7 @@ export default function SearchHome({ notices, dictionary, syncedAt, alwaysNote =
         </div>
 
         {!showResultsArea ? (
-          <StartScreen onSearch={search.search} onShowAll={search.showAll} />
+          <StartScreen popular={popular} onSearch={search.search} onOpenNotice={search.openNotice} onShowAll={search.showAll} />
         ) : (
           // 떠오르기 애니메이션은 끝난 뒤에도 이 요소를 별도 쌓임 층으로 만든다. 그 안에 있는 조건 추가 창의 z-50이 갇혀
           // dim과 목록 뒤로 가려지지 않도록, 창이 열리면(data-add-open) 이 요소 자체를 dim 위로 올린다

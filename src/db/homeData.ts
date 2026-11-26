@@ -13,7 +13,17 @@ export interface HomeData {
   syncedAt: string | null; // 마지막으로 수집에 성공한 시각 (ISO). 기록이 없으면 null
   alwaysNote: string | null; // 상시 열에 붙일 안내 (일부만 보여줄 때)
   isSample: boolean;
+  // 첫 화면 검색창 아래에 둘 많이 찾는 혜택 (출처 조회수 상위). 샘플 데이터처럼 조회수가 없으면 비운다 (예시 검색어를 대신 보여준다)
+  popular: PopularNotice[];
 }
+
+export interface PopularNotice {
+  id: string;
+  title: string;
+}
+
+// 첫 화면에 보여줄 많이 찾는 혜택 수
+export const POPULAR_COUNT = 4;
 
 // 조건에 맞는 상시 혜택을 한 번에 보내는 최대 건수
 export const ALWAYS_LIMIT = 300;
@@ -31,7 +41,9 @@ export async function loadHomeData(
   selectedId: string | null,
   today: IsoDate,
 ): Promise<HomeData> {
-  if (isSampleMode()) return { notices: SAMPLE_NOTICES, syncedAt: SAMPLE_SYNCED_AT, alwaysNote: null, isSample: true };
+  if (isSampleMode()) {
+    return { notices: SAMPLE_NOTICES, syncedAt: SAMPLE_SYNCED_AT, alwaysNote: null, isSample: true, popular: [] };
+  }
 
   const { db } = await import("./client");
   const { notice, syncLog } = await import("./schema");
@@ -43,6 +55,8 @@ export async function loadHomeData(
   const minorsOnly = sql<boolean>`(${notice.minorsOnly} or (${notice.taggedAt} is null and ${notice.title} ~ ${MINORS_TITLE} and ${notice.title} !~ ${ADULT_TITLE}))`;
   // 미성년자 전용인데 나이대가 비어 있으면 아동·청소년으로 본다 (어른 나이대로 찾을 때 빠지고, 아동·청소년으로 찾을 때 맞는다)
   const ageGroups = sql<string[]>`(case when ${minorsOnly} and cardinality(${notice.ageGroups}) = 0 then array['child']::text[] else ${notice.ageGroups} end)`;
+  // 출처 사이트 조회수 (정부24 원본의 "조회수"). 숫자가 아닌 글자는 떼고, 없으면 0
+  const views = sql<number>`coalesce(nullif(regexp_replace(${notice.rawPayload}->>'조회수', '[^0-9]', '', 'g'), '')::int, 0)`.mapWith(Number);
   const columns = {
     id: notice.id,
     source: notice.source,
@@ -59,6 +73,7 @@ export async function loadHomeData(
     regionCodes: notice.regionCodes,
     industries: notice.industries,
     minorsOnly,
+    views,
   };
   type Row = NoticeRow;
   type TargetColumn = typeof notice.regionCodes | typeof notice.industries | typeof ageGroups;
@@ -112,13 +127,13 @@ export async function loadHomeData(
   // 정렬에 상수를 넣으면 Postgres가 열 번호로 읽으므로, 필요할 때만 넣는다
   const localLast =
     inSidoDistrict && conditions.district === null ? [asc(sql`(case when ${inSidoDistrict} then 1 else 0 end)`)] : [];
-  // 분명히 맞은 혜택을 먼저, 그다음 시·도 전체 혜택, 지역을 콕 집은 혜택, 이름순
+  // 분명히 맞은 혜택을 먼저, 그다음 시·도 전체 혜택, 많이 찾는 혜택(조회수), 이름순 (boardColumns의 상시 열과 같은 순서)
   const alwaysRowsOf = (where: ReturnType<typeof and>) =>
     db
       .select(columns)
       .from(notice)
       .where(where)
-      .orderBy(desc(strength), ...localLast, desc(sql`cardinality(${notice.regionCodes})`), asc(notice.title))
+      .orderBy(desc(strength), ...localLast, desc(views), asc(notice.title))
       .limit(ALWAYS_LIMIT);
   const countOf = async (where: ReturnType<typeof and>) => (await db.select({ n: count() }).from(notice).where(where))[0].n;
 
@@ -143,8 +158,20 @@ export async function loadHomeData(
     return { always, alwaysTotal, picked: true };
   };
   const syncedQuery = db.select({ at: max(syncLog.finishedAt) }).from(syncLog).where(eq(syncLog.ok, true));
+  // 지금 신청할 수 있는(상시이거나 마감 전) 공고 중 조회수 상위. 조회수가 없는 공고(0)는 넣지 않는다
+  const popularQuery = db
+    .select({ id: notice.id, title: notice.title })
+    .from(notice)
+    .where(and(visible, sql`${views} > 0`, or(eq(notice.isAlways, true), isNull(notice.applyEnd), gte(notice.applyEnd, today))))
+    .orderBy(desc(views))
+    .limit(POPULAR_COUNT);
 
-  const [dated, { always, alwaysTotal, picked }, [{ at }]] = await Promise.all([datedQuery, loadAlways(), syncedQuery]);
+  const [dated, { always, alwaysTotal, picked }, [{ at }], popular] = await Promise.all([
+    datedQuery,
+    loadAlways(),
+    syncedQuery,
+    popularQuery,
+  ]);
   const rows: Row[] = [...dated, ...always];
 
   // 링크로 들어온 공고가 위 목록에 없으면(조건 없이 연 상시 혜택 등) 따로 불러 상세 패널이 열리게 한다
@@ -160,7 +187,7 @@ export async function loadHomeData(
     alwaysNote = `${alwaysTotal.toLocaleString()}건 중 ${ALWAYS_LIMIT}건`;
   }
 
-  return { notices: rows.map(toNotice), syncedAt: at ? new Date(at).toISOString() : null, alwaysNote, isSample: false };
+  return { notices: rows.map(toNotice), syncedAt: at ? new Date(at).toISOString() : null, alwaysNote, isSample: false, popular };
 }
 
 interface NoticeRow {
@@ -179,6 +206,7 @@ interface NoticeRow {
   regionCodes: string[];
   industries: string[];
   minorsOnly: boolean;
+  views: number;
 }
 
 function toNotice(row: NoticeRow): Notice {
@@ -197,6 +225,7 @@ function toNotice(row: NoticeRow): Notice {
     industries: row.industries.filter(isIndustry),
     topics: row.topics.filter(isTopic),
     minorsOnly: row.minorsOnly,
+    views: row.views,
     detailUrl: row.detailUrl,
     sourceName: source.name,
     sourceUrl: source.url,

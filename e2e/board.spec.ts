@@ -20,17 +20,17 @@ test.describe("전체 보드", () => {
     expect(second.y).toBeGreaterThanOrEqual(first.y + first.height);
   });
 
-  test("탭 없이 접수 중·접수 예정·상시 구역을 차례로 보여줍니다", async ({ page }) => {
+  test("탭 없이 상시(많이 찾는 대표 혜택)·접수 중·접수 예정 구역을 차례로 보여줍니다", async ({ page }) => {
     await expect(page.getByRole("tab")).toHaveCount(0);
+    const always = (await column(page, "상시").boundingBox())!;
     const ongoing = (await column(page, "접수 중").boundingBox())!;
     const upcoming = (await column(page, "접수 예정").boundingBox())!;
-    const always = (await column(page, "상시").boundingBox())!;
+    expect(ongoing.y).toBeGreaterThan(always.y);
     expect(upcoming.y).toBeGreaterThan(ongoing.y);
-    expect(always.y).toBeGreaterThan(upcoming.y);
   });
 
   test("구역 제목에 공고 수를 표시합니다", async ({ page }) => {
-    await expect(page.getByRole("heading", { level: 2 })).toHaveText([/접수 중\s*11/, /접수 예정\s*3/, /상시\s*3/]);
+    await expect(page.getByRole("heading", { level: 2 })).toHaveText([/상시\s*3/, /접수 중\s*11/, /접수 예정\s*3/]);
   });
 
   test("접수 중 구역은 7일 안에 마감하는 공고를 따로 묶어 맨 위에 둡니다", async ({ page }) => {
@@ -110,8 +110,8 @@ test.describe("정렬", () => {
 test.describe("모바일", () => {
   test.use({ viewport: { width: 390, height: 844 } });
 
-  test("한 열로 쌓고 접수 중 공고를 먼저 보여줍니다", async ({ page }) => {
-    const first = column(page, "접수 중").getByRole("article").first();
+  test("한 열로 쌓고 맨 위 구역(상시 대표 혜택)의 첫 공고를 화면 안에 보여줍니다", async ({ page }) => {
+    const first = column(page, "상시").getByRole("article").first();
     await expect(first).toBeInViewport();
     const box = (await first.boundingBox())!;
     expect(box.x + box.width).toBeLessThanOrEqual(390);

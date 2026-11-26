@@ -23,6 +23,7 @@ export interface Notice extends NoticeSchedule {
   industries: Industry[];
   topics: Topic[];
   minorsOnly?: boolean; // 대상이 미성년자뿐 (AI 태깅). 나이대 조건으로 찾을 때는 뺀다
+  views?: number; // 출처 사이트 조회수 (정부24만 있음). 많이 찾는 혜택을 먼저 보여 주는 데 쓴다. 없으면 0으로 본다
   detailUrl: string | null; // 원문 공고 주소. 없거나 공식 도메인이 아니면 sourceUrl로 보낸다
   sourceName: string; // 출처 사이트 이름 (예: K-Startup)
   sourceUrl: string; // 출처 사이트 메인 주소

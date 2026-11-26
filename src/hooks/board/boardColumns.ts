@@ -1,6 +1,6 @@
 // 검색 결과를 접수 예정·접수 중·상시 세 열로 나눈다 (상태 보드 전용, 기획서 5장 상태 정의)
 // 마감된 공고는 보드에 넣지 않는다
-import type { IsoDate, NoticeSchedule } from "@/domain/notice/notice";
+import type { IsoDate, Notice } from "@/domain/notice/notice";
 import { noticeStatusOf, statusBadgeOf, type NoticeStatus } from "@/domain/notice/noticeStatus";
 import type { NoticeMatch } from "@/domain/search/matchNotices";
 
@@ -25,17 +25,19 @@ export interface BoardColumn {
   cards: BoardCard[];
 }
 
-type Compare = (a: NoticeSchedule, b: NoticeSchedule) => number;
+type Compare = (a: Notice, b: Notice) => number;
 
 const byTitle: Compare = (a, b) => a.title.localeCompare(b.title, "ko");
 const byStart: Compare = (a, b) => (a.applyStart ?? "").localeCompare(b.applyStart ?? "") || byTitle(a, b);
 const byEnd: Compare = (a, b) => (a.applyEnd ?? "9999").localeCompare(b.applyEnd ?? "9999") || byTitle(a, b);
+// 상시는 마감이 없으므로 많이 찾는 혜택(출처 조회수)부터. 조회수가 없으면 0으로 보고 이름순
+const byViews: Compare = (a, b) => (b.views ?? 0) - (a.views ?? 0) || byTitle(a, b);
 
 // 열 순서, 각 열에 들어가는 접수 상태, 열 안의 정렬 기준 (검색 조건과 분명히 맞은 정도 다음에 쓴다)
 const COLUMNS: { key: BoardColumnKey; title: string; statuses: NoticeStatus[]; compare: Compare }[] = [
   { key: "upcoming", title: "접수 예정", statuses: ["upcoming"], compare: byStart },
   { key: "ongoing", title: "접수 중", statuses: ["open", "closing"], compare: byEnd },
-  { key: "always", title: "상시", statuses: ["always"], compare: byTitle },
+  { key: "always", title: "상시", statuses: ["always"], compare: byViews },
 ];
 
 // 공고 하나를 목록 줄 데이터로 (상태·배지). 마감된 공고도 "마감" 배지로 만든다 (최근 본 공고 목록에서 쓴다)
@@ -63,4 +65,14 @@ export function toBoardColumns(matches: NoticeMatch[], today: IsoDate, order: Bo
       )
       .map(({ match }) => boardCardOf(match, today)),
   }));
+}
+
+// 목록에 보여줄 구역 순서. 조건에 맞는 상시 혜택이 있으면 맨 위에 둔다:
+// 접힌 상시 구역은 많이 찾는 대표 혜택 몇 건이라(국민취업지원제도 등), 검색하자마자 눈에 들어오는 첫 줄이 된다.
+// 상시 혜택이 없으면(조건 없이 전체 보기 등) 접수 중 → 접수 예정 → 상시 순서
+export function sectionOrderOf(columns: BoardColumn[]): BoardColumn[] {
+  const byKey = (key: BoardColumnKey) => columns.filter((column) => column.key === key);
+  const alwaysFirst = byKey("always").some((column) => column.cards.length > 0);
+  const order: BoardColumnKey[] = alwaysFirst ? ["always", "ongoing", "upcoming"] : ["ongoing", "upcoming", "always"];
+  return order.flatMap(byKey);
 }
