@@ -448,10 +448,10 @@ export default function SearchHome({
           }`}
         >
           <div className="overflow-hidden">
-            <div className="flex flex-col items-center gap-3 pb-10 text-center">
+            <div className="flex flex-col items-center gap-3 pt-4 pb-10 text-center">
               {/* 로고 마크 + 서비스명 (마크는 장식이라 화면 낭독기는 이름만 읽는다) */}
-              <div className="flex items-center gap-3.5">
-                <LogoMark sparkle className="h-16 w-auto" />
+              <div className="flex items-center gap-5">
+                <LogoMark sparkle className="h-14 w-auto" />
                 {start && (
                   <h1 className="text-5xl font-extrabold tracking-tight">
                     <Wordmark />
