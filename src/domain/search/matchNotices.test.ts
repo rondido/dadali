@@ -217,4 +217,14 @@ describe("대상(가구 상황) 조건", () => {
       ["everyone", 0, []],
     ]);
   });
+
+  it("대상이 분명히 맞으면 그 공고에 붙은 대상 수를 남깁니다", () => {
+    const conditions = { ...EMPTY_CONDITIONS, target: "disabled" as const };
+    const { matches } = matchNotices([forDisabled, forLowIncome, forEveryone], conditions);
+    expect(matches.map((m) => [m.notice.id, m.targetBreadth])).toEqual([
+      ["disabled", 1],
+      ["lowincome", 2],
+      ["everyone", undefined],
+    ]);
+  });
 });
