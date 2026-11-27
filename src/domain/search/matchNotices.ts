@@ -14,7 +14,13 @@ export interface NoticeMatch {
   strength?: number;
   // 시·도로만 찾았을 때 시·군·구 기관의 공고 (시·도 전체·전국 공고 뒤에 보여준다)
   local?: boolean;
+  // 대상으로 찾아 분명히 맞았을 때 그 공고에 붙은 대상 수. 적을수록 그 처지 전용이라 같은 강도에서 먼저 보여준다
+  targetBreadth?: number;
 }
+
+// 대상이 분명히 맞지 않은 공고는 전용 혜택 뒤로 보낸다
+export const NOT_TARGETED = 99;
+export const targetBreadthOf = (match: Pick<NoticeMatch, "targetBreadth">) => match.targetBreadth ?? NOT_TARGETED;
 
 export interface MatchResult {
   matches: NoticeMatch[];
@@ -78,7 +84,17 @@ export function matchNotices(notices: Notice[], conditions: SearchConditions, ke
     const reasons = matchConditions(notice, conditions);
     if (!reasons) return [];
     const local = conditions.district === null && districtRelation(notice, conditions) === "other";
-    return [{ notice, reasons, strength: strengthOf(notice, conditions), ...(local ? { local } : {}) }];
+    const targets = notice.targets ?? [];
+    const targeted = conditions.target !== null && targets.includes(conditions.target);
+    return [
+      {
+        notice,
+        reasons,
+        strength: strengthOf(notice, conditions),
+        ...(local ? { local } : {}),
+        ...(targeted ? { targetBreadth: targets.length } : {}),
+      },
+    ];
   });
 
   // 어느 공고에도 없는 단어로 결과를 0건으로 만들지 않도록, 한 건이라도 걸리는 단어만 쓴다

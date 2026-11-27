@@ -2,7 +2,7 @@
 // 마감된 공고는 보드에 넣지 않는다
 import type { IsoDate, Notice } from "@/domain/notice/notice";
 import { noticeStatusOf, statusBadgeOf, type NoticeStatus } from "@/domain/notice/noticeStatus";
-import type { NoticeMatch } from "@/domain/search/matchNotices";
+import { targetBreadthOf, type NoticeMatch } from "@/domain/search/matchNotices";
 
 export type BoardColumnKey = "upcoming" | "ongoing" | "always";
 
@@ -54,12 +54,13 @@ export function toBoardColumns(matches: NoticeMatch[], today: IsoDate, order: Bo
     title,
     cards: withStatus
       .filter(({ status }) => statuses.includes(status))
-      // 맞춤순: 조건과 태그로 분명히 맞은 공고가 먼저, 그다음 시·도 전체 공고가 시·군·구 공고보다 먼저,
+      // 맞춤순: 조건과 태그로 분명히 맞은 공고가 먼저, 그다음 대상이 적게 붙은(그 처지 전용) 공고, 시·도 전체 공고가 시·군·구 공고보다 먼저,
       // 같으면 열의 원래 순서(시작·마감 빠른 순, 이름순). 마감순은 열의 원래 순서만 쓴다
       .sort(
         (a, b) =>
           (order === "match"
             ? (b.match.strength ?? 0) - (a.match.strength ?? 0) ||
+              targetBreadthOf(a.match) - targetBreadthOf(b.match) ||
               Number(a.match.local ?? false) - Number(b.match.local ?? false)
             : 0) || compare(a.match.notice, b.match.notice),
       )
